@@ -582,7 +582,10 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         t = self._live_tab._thread
         if t and t.isRunning():
-            t.stop()
+            self._live_tab._paint_timer.stop()
+            t.worker.stop()   # signal the loop to exit
+            t.quit()
+            t.wait(3000)      # give it up to 3s to exit cleanly
         event.accept()
 
 
