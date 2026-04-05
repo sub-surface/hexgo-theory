@@ -432,10 +432,13 @@ class LiveTab(QWidget):
     # ── Experiment control ────────────────────────────────────────────────────
 
     def _start_experiment(self):
-        # Clean up any previous (finished) thread before creating a new one
+        # If previous thread still running, do nothing
+        if self._thread is not None and self._thread.isRunning():
+            return
+        # Previous thread finished — wait() ensures OS thread is fully gone
+        # before we drop the reference (avoids "destroyed while running")
         if self._thread is not None:
-            if self._thread.isRunning():
-                return
+            self._thread.wait()
             self._thread = None
             self._worker = None
 
@@ -535,8 +538,9 @@ class LiveTab(QWidget):
         self._analysis.on_stats(stats)
         self._run_btn.setEnabled(True)
         self._stop_btn.setEnabled(False)
-        self._thread = None
-        self._worker = None
+        # Do NOT null _thread here — the signal fires while the thread is still
+        # technically running. We keep the reference alive; _start_experiment
+        # calls wait() before replacing it, ensuring clean handoff.
         w1 = stats.wins.get(1, 0)
         w2 = stats.wins.get(2, 0)
         wd = stats.wins.get(0, 0)
@@ -550,8 +554,7 @@ class LiveTab(QWidget):
         self._log.append(f"[ERROR] {msg}")
         self._run_btn.setEnabled(True)
         self._stop_btn.setEnabled(False)
-        self._thread = None
-        self._worker = None
+        # Same as _on_finished — keep reference alive until next Run or close
 
 
 # ── Main window ───────────────────────────────────────────────────────────────
