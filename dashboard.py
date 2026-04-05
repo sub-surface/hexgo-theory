@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
     QToolBar, QLabel, QComboBox, QPushButton, QSlider, QCheckBox,
     QSplitter, QTextEdit, QSizePolicy, QSpinBox, QFrame,
 )
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import Qt, QSize, QTimer
 from PySide6.QtGui import QFont, QColor, QPalette, QIcon, QAction
 
 from widgets.hex_grid import HexGridWidget
@@ -151,6 +151,12 @@ class MainWindow(QMainWindow):
         self._thread: ExperimentThread | None = None
         self._worker: ExperimentWorker | None = None
         self._move_count = 0
+
+        # Paint throttle — buffer latest MoveEvent, flush at 30fps max
+        self._pending_move: MoveEvent | None = None
+        self._paint_timer = QTimer(self)
+        self._paint_timer.setInterval(33)  # ~30fps
+        self._paint_timer.timeout.connect(self._flush_move)
 
         self._build_ui()
         self._connect_signals()
@@ -357,9 +363,11 @@ class MainWindow(QMainWindow):
         self._stop_btn.setEnabled(True)
         self._status_lbl.setText(f"running: {exp_name}")
 
+        self._paint_timer.start()
         thread.start()
 
     def _stop_experiment(self):
+        self._paint_timer.stop()
         if self._thread:
             self._thread.stop()
         self._run_btn.setEnabled(True)
@@ -370,8 +378,16 @@ class MainWindow(QMainWindow):
 
     def _on_move(self, evt: MoveEvent):
         self._move_count += 1
+        self._pending_move = evt
+        # Analysis panel always gets every move (cheap label updates)
+        self._analysis.on_move(evt)
 
-        # Update all three canvas widgets
+    def _flush_move(self):
+        """Called by paint timer at 30fps — drain the latest buffered move event."""
+        evt = self._pending_move
+        if evt is None:
+            return
+        self._pending_move = None
         self._hex_grid.update_state(
             game=evt.game,
             threats_p1=evt.threats_p1,
@@ -394,7 +410,6 @@ class MainWindow(QMainWindow):
             forks_p1=evt.forks_p1,
             forks_p2=evt.forks_p2,
         )
-        self._analysis.on_move(evt)
 
     def _on_game(self, evt: GameEvent):
         self._analysis.on_game(evt)
@@ -410,6 +425,8 @@ class MainWindow(QMainWindow):
         sb.setValue(sb.maximum())
 
     def _on_finished(self, stats: ExperimentStats):
+        self._paint_timer.stop()
+        self._flush_move()  # ensure last frame paints
         self._analysis.on_stats(stats)
         self._run_btn.setEnabled(True)
         self._stop_btn.setEnabled(False)
@@ -423,6 +440,7 @@ class MainWindow(QMainWindow):
         self._log.append(f"■ experiment complete")
 
     def _on_error(self, msg: str):
+        self._paint_timer.stop()
         self._log.append(f"[ERROR] {msg}")
         self._run_btn.setEnabled(True)
         self._stop_btn.setEnabled(False)

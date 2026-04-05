@@ -74,8 +74,9 @@ class HexGridWidget(QWidget):
         self._drag_start: Optional[QPointF] = None
         self._drag_offset_start: Optional[QPointF] = None
 
-        # Font
-        self._font = QFont("Consolas", 7)
+        # Font — use pixel size to avoid -1pt when Consolas unavailable
+        self._font = QFont("Consolas, Courier New, monospace")
+        self._font.setPixelSize(11)
 
     # ── Public API ────────────────────────────────────────────────────────────
 

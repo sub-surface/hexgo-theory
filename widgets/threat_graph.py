@@ -70,7 +70,8 @@ class ThreatGraphWidget(QWidget):
         self._drag_offset_start: Optional[QPointF] = None
         self.setMouseTracking(True)
 
-        self._font = QFont("Consolas", 7)
+        self._font = QFont("Consolas, Courier New, monospace")
+        self._font.setPixelSize(11)
 
     def update_state(
         self, game: HexGame,
@@ -82,8 +83,15 @@ class ThreatGraphWidget(QWidget):
         self.threats_p2 = threats_p2 or {}
         self.forks_p1   = forks_p1 or {}
         self.forks_p2   = forks_p2 or {}
-        self._rebuild_graph()
-        self.update()
+        # Only rebuild graph topology every 4 moves to avoid thrashing layout
+        move_count = len(game.move_history) if game else 0
+        if not hasattr(self, '_last_rebuild_at'):
+            self._last_rebuild_at = -1
+        if move_count - self._last_rebuild_at >= 4 or move_count == 0:
+            self._rebuild_graph()
+            self._last_rebuild_at = move_count
+        else:
+            self.update()  # Just repaint with new threat/fork colours
 
     def _rebuild_graph(self):
         game = self.game

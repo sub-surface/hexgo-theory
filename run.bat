@@ -1,2 +1,3 @@
 @echo off
-"C:\Users\Leon\AppData\Local\Programs\Python\Python312\python.exe" "%~dp0dashboard.py" %*
+cd /d "%~dp0"
+"C:\Program Files\Python312\python.exe" dashboard.py %*

@@ -162,7 +162,8 @@ class TriGridWidget(QWidget):
                 painter.drawEllipse(QPointF(cx, cy), radius + 2, radius + 2)
 
     def _draw_axis_legend(self, painter: QPainter):
-        font = QFont("Consolas", 8)
+        font = QFont("Consolas, Courier New, monospace")
+        font.setPixelSize(11)
         painter.setFont(font)
         labels = ["q-axis (1,0)", "r-axis (0,1)", "diag (1,-1)"]
         for i, (col, label) in enumerate(zip(AXIS_ACTIVE_COLS, labels)):

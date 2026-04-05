@@ -122,7 +122,9 @@ class SparklineWidget(QWidget):
 
         if self._label:
             painter.setPen(DIM)
-            painter.setFont(QFont("Consolas", 8))
+            f = QFont("Consolas, Courier New, monospace")
+            f.setPixelSize(11)
+            painter.setFont(f)
             painter.drawText(QRectF(pad, pad, inner_w, 12),
                              Qt.AlignmentFlag.AlignLeft, self._label)
 
@@ -155,7 +157,9 @@ class MiniBarWidget(QWidget):
         bw = w / n
         pad_y = 4
 
-        painter.setFont(QFont("Consolas", 7))
+        f = QFont("Consolas, Courier New, monospace")
+        f.setPixelSize(10)
+        painter.setFont(f)
         for i, (lbl, v, col) in enumerate(self._bars):
             bh = max(1.0, (v / max_v) * (h - pad_y - 12))
             x = i * bw
