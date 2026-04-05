@@ -42,8 +42,7 @@ GREEN    = QColor("#1a7a40")
 def _label(text: str, dim: bool = False) -> QLabel:
     lbl = QLabel(text)
     lbl.setStyleSheet(
-        f"color: {'#3a4a5a' if dim else '#c8d4e0'}; "
-        f"font-family: Consolas; font-size: 11px; padding: 0;"
+        f"color: {'#3a4a5a' if dim else '#c8d4e0'}; padding: 0;"
     )
     return lbl
 
@@ -51,8 +50,7 @@ def _label(text: str, dim: bool = False) -> QLabel:
 def _section(title: str) -> QLabel:
     lbl = QLabel(title)
     lbl.setStyleSheet(
-        "color: #003580; font-family: Consolas; font-size: 10px; "
-        "font-weight: bold; letter-spacing: 1px; "
+        "color: #003580; font-weight: bold; "
         "padding: 4px 0 2px 0; border-top: 1px solid #0d1a2a;"
     )
     return lbl
@@ -275,11 +273,11 @@ class AnalysisPanel(QWidget):
         self._lbl_t2.setText(f"P2: {t2}" + (" ★" if t2 > 0 else ""))
         self._lbl_t1.setStyleSheet(
             f"color: {'#cc2200' if t1 > 0 else '#c8d4e0'}; "
-            "font-family: Consolas; font-size: 11px;"
+            ""
         )
         self._lbl_t2.setStyleSheet(
             f"color: {'#cc2200' if t2 > 0 else '#c8d4e0'}; "
-            "font-family: Consolas; font-size: 11px;"
+            ""
         )
 
         f1 = len(evt.forks_p1)
@@ -288,11 +286,11 @@ class AnalysisPanel(QWidget):
         self._lbl_f2.setText(f"P2: {f2}")
         self._lbl_f1.setStyleSheet(
             f"color: {'#00b4d8' if f1 > 0 else '#c8d4e0'}; "
-            "font-family: Consolas; font-size: 11px;"
+            ""
         )
         self._lbl_f2.setStyleSheet(
             f"color: {'#00b4d8' if f2 > 0 else '#c8d4e0'}; "
-            "font-family: Consolas; font-size: 11px;"
+            ""
         )
 
         ap1, ap2 = evt.live_aps

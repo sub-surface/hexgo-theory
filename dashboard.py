@@ -38,8 +38,6 @@ STYLE = """
 QMainWindow, QWidget {
     background: #050a0f;
     color: #c8d4e0;
-    font-family: Consolas;
-    font-size: 11px;
 }
 QTabWidget::pane {
     border: none;
@@ -51,9 +49,6 @@ QTabBar::tab {
     border: 1px solid #0d1a2a;
     border-bottom: none;
     padding: 3px 14px;
-    font-family: Consolas;
-    font-size: 10px;
-    letter-spacing: 1px;
 }
 QTabBar::tab:selected {
     background: #050a0f;
@@ -73,7 +68,6 @@ QComboBox {
     padding: 2px 6px;
     min-width: 140px;
     border-radius: 0;
-    font-size: 11px;
 }
 QComboBox QAbstractItemView {
     background: #0d1a2a;
@@ -88,7 +82,6 @@ QPushButton {
     padding: 2px 10px;
     border-radius: 0;
     min-width: 52px;
-    font-size: 11px;
 }
 QPushButton:hover { background: #1a2535; }
 QPushButton:pressed { background: #003580; }
@@ -101,7 +94,7 @@ QSlider::handle:horizontal {
     background: #003580; width: 10px; height: 10px; margin: -4px 0;
 }
 QSlider::sub-page:horizontal { background: #003580; }
-QCheckBox { color: #c8d4e0; spacing: 4px; font-size: 11px; }
+QCheckBox { color: #c8d4e0; spacing: 4px; }
 QCheckBox::indicator {
     width: 11px; height: 11px;
     background: #0d1a2a;
@@ -113,8 +106,6 @@ QTextEdit {
     color: #3a6a5a;
     border: none;
     border-top: 1px solid #0d1a2a;
-    font-family: Consolas;
-    font-size: 10px;
     padding: 4px;
 }
 QSplitter::handle { background: #0d1a2a; }
@@ -123,16 +114,17 @@ QSplitter::handle:vertical   { height: 1px; }
 QSpinBox {
     background: #0d1a2a; color: #c8d4e0;
     border: 1px solid #1a2535; padding: 2px 4px;
-    border-radius: 0; width: 55px; font-size: 11px;
+    border-radius: 0; width: 55px;
 }
 QScrollBar:vertical { background: #050a0f; width: 5px; }
 QScrollBar::handle:vertical { background: #1a2535; min-height: 20px; }
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
 """
 
+# Panel header: no font-size — inherits app font
 PANEL_HDR = (
-    "background: #080f18; color: #003580; font-family: Consolas; "
-    "font-size: 9px; font-weight: bold; letter-spacing: 2px; "
+    "background: #080f18; color: #003580; "
+    "font-weight: bold; "
     "padding: 2px 6px; border-bottom: 1px solid #0d1a2a;"
 )
 
@@ -148,7 +140,7 @@ EXPERIMENTS = {
 def _toolbar_label(text: str) -> QLabel:
     lbl = QLabel(text)
     lbl.setStyleSheet(
-        "color: #3a4a5a; font-size: 9px; letter-spacing: 1px; padding: 0 3px;"
+        "color: #3a4a5a; padding: 0 3px;"
     )
     return lbl
 
@@ -206,7 +198,7 @@ class ReplayTab(QWidget):
             lambda v: self._timer.setInterval(v)
         )
         self._pos_lbl = QLabel("—")
-        self._pos_lbl.setStyleSheet("color: #3a4a5a; font-size: 10px;")
+        self._pos_lbl.setStyleSheet("color: #3a4a5a;")
 
         for w in (self._load_btn, self._prev_btn, self._next_btn,
                   self._play_btn, self._stop_btn2,
@@ -341,7 +333,7 @@ class LiveTab(QWidget):
         self._delay_slider.setValue(0)
         self._delay_slider.setFixedWidth(80)
         self._delay_label = QLabel("0")
-        self._delay_label.setStyleSheet("color:#3a4a5a; font-size:10px; min-width:24px;")
+        self._delay_label.setStyleSheet("color:#3a4a5a; min-width:24px;")
         self._delay_slider.valueChanged.connect(
             lambda v: self._delay_label.setText(str(v))
         )
@@ -584,7 +576,7 @@ class MainWindow(QMainWindow):
 
         self.statusBar().setStyleSheet(
             "background: #080f18; border-top: 1px solid #0d1a2a; "
-            "color: #3a4a5a; font-size: 10px;"
+            "color: #3a4a5a;"
         )
 
     def closeEvent(self, event):
@@ -599,6 +591,13 @@ class MainWindow(QMainWindow):
 def main():
     app = QApplication(sys.argv)
     app.setApplicationName("HexGo Theory")
+
+    # Set app font explicitly at a valid point size so all widgets inherit it.
+    # Never use font-size in stylesheets — let everything derive from this.
+    app_font = QFont()
+    app_font.setFamilies(["Consolas", "Courier New", "monospace"])
+    app_font.setPointSize(9)   # safe on all DPI settings
+    app.setFont(app_font)
 
     palette = QPalette()
     palette.setColor(QPalette.ColorRole.Window,          QColor("#050a0f"))

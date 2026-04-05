@@ -224,8 +224,11 @@ class ExperimentThread(QThread):
         self.worker = worker
         self.worker.moveToThread(self)
         self.started.connect(self.worker.run)
+        # Keep thread alive until fully done; then schedule cleanup
+        self.finished.connect(self.deleteLater)
 
     def stop(self):
         self.worker.stop()
         self.quit()
-        self.wait(2000)
+        # Do NOT call self.wait() here — that would block the GUI thread.
+        # The thread cleans itself up via deleteLater when it exits.
