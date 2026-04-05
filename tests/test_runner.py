@@ -96,6 +96,7 @@ class TestExperimentRunner:
         evt = games[0]
         assert hasattr(evt, 'winner')
         assert hasattr(evt, 'move_count')
+        assert hasattr(evt, 'move_history')
         assert hasattr(evt, 'moves_p1')
         assert hasattr(evt, 'moves_p2')
         assert hasattr(evt, 'correlation')

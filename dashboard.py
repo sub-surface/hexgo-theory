@@ -2,24 +2,27 @@
 HexGo Theory Dashboard — PySide6 desktop app.
 
 Layout:
-  ┌─────────────────────────────────────────────────────────────────┐
-  │  toolbar: experiment selector, controls, step delay, toggles    │
-  ├────────────────┬──────────────────┬────────────────┬────────────┤
-  │  HEX GRID      │  TRI GRID        │  THREAT GRAPH  │  ANALYSIS  │
-  │  (pan/zoom)    │  (lattice dual)  │  (hypergraph)  │  (metrics) │
-  ├────────────────┴──────────────────┴────────────────┴────────────┤
-  │  log output (scrolling text)                                    │
-  └─────────────────────────────────────────────────────────────────┘
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  toolbar: experiment selector, controls, step delay, toggles     │
+  ├──────────────────────────────────────────────────────────────────┤
+  │  QTabWidget:                                                     │
+  │    [Live]   hex / tri / threat / analysis  +  log               │
+  │    [Replay] saved-game stepper                                   │
+  └──────────────────────────────────────────────────────────────────┘
 """
 
 import sys
+import json
+from pathlib import Path
+
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QToolBar, QLabel, QComboBox, QPushButton, QSlider, QCheckBox,
-    QSplitter, QTextEdit, QSizePolicy, QSpinBox, QFrame,
+    QSplitter, QTextEdit, QSizePolicy, QSpinBox, QTabWidget,
+    QFileDialog, QScrollArea,
 )
 from PySide6.QtCore import Qt, QSize, QTimer
-from PySide6.QtGui import QFont, QColor, QPalette, QIcon, QAction
+from PySide6.QtGui import QColor, QPalette, QFont
 
 from widgets.hex_grid import HexGridWidget
 from widgets.tri_grid import TriGridWidget
@@ -38,16 +41,30 @@ QMainWindow, QWidget {
     font-family: Consolas;
     font-size: 11px;
 }
+QTabWidget::pane {
+    border: none;
+    background: #050a0f;
+}
+QTabBar::tab {
+    background: #080f18;
+    color: #3a4a5a;
+    border: 1px solid #0d1a2a;
+    border-bottom: none;
+    padding: 3px 14px;
+    font-family: Consolas;
+    font-size: 10px;
+    letter-spacing: 1px;
+}
+QTabBar::tab:selected {
+    background: #050a0f;
+    color: #003580;
+    border-bottom: 1px solid #050a0f;
+}
 QToolBar {
     background: #080f18;
     border-bottom: 1px solid #0d1a2a;
-    spacing: 6px;
-    padding: 4px 8px;
-}
-QToolBar QLabel {
-    color: #3a4a5a;
-    font-size: 10px;
-    letter-spacing: 1px;
+    spacing: 4px;
+    padding: 3px 6px;
 }
 QComboBox {
     background: #0d1a2a;
@@ -56,6 +73,7 @@ QComboBox {
     padding: 2px 6px;
     min-width: 140px;
     border-radius: 0;
+    font-size: 11px;
 }
 QComboBox QAbstractItemView {
     background: #0d1a2a;
@@ -67,36 +85,25 @@ QPushButton {
     background: #0d1a2a;
     color: #c8d4e0;
     border: 1px solid #1a2535;
-    padding: 3px 12px;
+    padding: 2px 10px;
     border-radius: 0;
-    min-width: 60px;
+    min-width: 52px;
+    font-size: 11px;
 }
 QPushButton:hover { background: #1a2535; }
 QPushButton:pressed { background: #003580; }
 QPushButton:disabled { color: #1a2535; border-color: #0d1a2a; }
-QPushButton#run_btn {
-    color: #e8e8e8;
-    border-color: #003580;
-}
-QPushButton#run_btn:hover { background: #003580; }
-QPushButton#stop_btn {
-    color: #cc2200;
-    border-color: #5a1010;
-}
-QSlider::groove:horizontal {
-    background: #0d1a2a;
-    height: 3px;
-}
+QPushButton#run_btn  { color: #e8e8e8; border-color: #003580; }
+QPushButton#run_btn:hover  { background: #003580; }
+QPushButton#stop_btn { color: #cc2200; border-color: #5a1010; }
+QSlider::groove:horizontal { background: #0d1a2a; height: 3px; }
 QSlider::handle:horizontal {
-    background: #003580;
-    width: 10px;
-    height: 10px;
-    margin: -4px 0;
+    background: #003580; width: 10px; height: 10px; margin: -4px 0;
 }
 QSlider::sub-page:horizontal { background: #003580; }
-QCheckBox { color: #c8d4e0; spacing: 4px; }
+QCheckBox { color: #c8d4e0; spacing: 4px; font-size: 11px; }
 QCheckBox::indicator {
-    width: 12px; height: 12px;
+    width: 11px; height: 11px;
     background: #0d1a2a;
     border: 1px solid #1a2535;
 }
@@ -112,25 +119,22 @@ QTextEdit {
 }
 QSplitter::handle { background: #0d1a2a; }
 QSplitter::handle:horizontal { width: 1px; }
-QSplitter::handle:vertical { height: 1px; }
+QSplitter::handle:vertical   { height: 1px; }
 QSpinBox {
-    background: #0d1a2a;
-    color: #c8d4e0;
-    border: 1px solid #1a2535;
-    padding: 2px 4px;
-    border-radius: 0;
-    width: 60px;
+    background: #0d1a2a; color: #c8d4e0;
+    border: 1px solid #1a2535; padding: 2px 4px;
+    border-radius: 0; width: 55px; font-size: 11px;
 }
-QScrollBar:vertical {
-    background: #050a0f;
-    width: 6px;
-}
-QScrollBar::handle:vertical {
-    background: #1a2535;
-    min-height: 20px;
-}
+QScrollBar:vertical { background: #050a0f; width: 5px; }
+QScrollBar::handle:vertical { background: #1a2535; min-height: 20px; }
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
 """
+
+PANEL_HDR = (
+    "background: #080f18; color: #003580; font-family: Consolas; "
+    "font-size: 9px; font-weight: bold; letter-spacing: 2px; "
+    "padding: 2px 6px; border-bottom: 1px solid #0d1a2a;"
+)
 
 EXPERIMENTS = {
     "Eisenstein vs Eisenstein": "eis_vs_eis",
@@ -141,197 +145,307 @@ EXPERIMENTS = {
 }
 
 
-class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("HexGo Theory")
-        self.resize(1600, 900)
-        self.setStyleSheet(STYLE)
+def _toolbar_label(text: str) -> QLabel:
+    lbl = QLabel(text)
+    lbl.setStyleSheet(
+        "color: #3a4a5a; font-size: 9px; letter-spacing: 1px; padding: 0 3px;"
+    )
+    return lbl
 
+
+def _titled(title: str, widget: QWidget) -> QWidget:
+    frame = QWidget()
+    lay = QVBoxLayout(frame)
+    lay.setContentsMargins(0, 0, 0, 0)
+    lay.setSpacing(0)
+    hdr = QLabel(title)
+    hdr.setStyleSheet(PANEL_HDR)
+    lay.addWidget(hdr)
+    lay.addWidget(widget)
+    return frame
+
+
+# ── Replay tab ────────────────────────────────────────────────────────────────
+
+class ReplayTab(QWidget):
+    """Load a saved game (list of moves as JSON) and step through it."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._moves: list[tuple[int, int]] = []
+        self._cursor = 0
+        self._game = None
+        self._timer = QTimer(self)
+        self._timer.setInterval(200)
+        self._timer.timeout.connect(self._step_forward)
+
+        self._build_ui()
+
+    def _build_ui(self):
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(0)
+
+        # Controls bar
+        ctrl = QWidget()
+        ctrl.setStyleSheet("background: #080f18; border-bottom: 1px solid #0d1a2a;")
+        ctrl_lay = QHBoxLayout(ctrl)
+        ctrl_lay.setContentsMargins(6, 3, 6, 3)
+        ctrl_lay.setSpacing(6)
+
+        self._load_btn  = QPushButton("Load game…")
+        self._prev_btn  = QPushButton("◀")
+        self._next_btn  = QPushButton("▶")
+        self._play_btn  = QPushButton("Play")
+        self._stop_btn2 = QPushButton("Stop")
+        self._speed_sl  = QSlider(Qt.Orientation.Horizontal)
+        self._speed_sl.setRange(50, 2000)
+        self._speed_sl.setValue(200)
+        self._speed_sl.setFixedWidth(80)
+        self._speed_sl.valueChanged.connect(
+            lambda v: self._timer.setInterval(v)
+        )
+        self._pos_lbl = QLabel("—")
+        self._pos_lbl.setStyleSheet("color: #3a4a5a; font-size: 10px;")
+
+        for w in (self._load_btn, self._prev_btn, self._next_btn,
+                  self._play_btn, self._stop_btn2,
+                  _toolbar_label("speed"), self._speed_sl, self._pos_lbl):
+            ctrl_lay.addWidget(w)
+        ctrl_lay.addStretch()
+        lay.addWidget(ctrl)
+
+        # Panels
+        splitter = QSplitter(Qt.Orientation.Horizontal)
+        splitter.setHandleWidth(1)
+        self._hex  = HexGridWidget()
+        self._tri  = TriGridWidget()
+        splitter.addWidget(_titled("HEX GRID", self._hex))
+        splitter.addWidget(_titled("TRI GRID", self._tri))
+        splitter.setSizes([500, 500])
+        lay.addWidget(splitter)
+
+        # Wire
+        self._load_btn.clicked.connect(self._load_game)
+        self._prev_btn.clicked.connect(self._step_back)
+        self._next_btn.clicked.connect(self._step_forward)
+        self._play_btn.clicked.connect(self._timer.start)
+        self._stop_btn2.clicked.connect(self._timer.stop)
+
+    def _load_game(self):
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Load game", str(Path.home()), "JSON files (*.json);;All files (*)"
+        )
+        if not path:
+            return
+        try:
+            data = json.loads(Path(path).read_text())
+            # Accept either a list of [q, r] pairs or a dict with "moves" key
+            if isinstance(data, list):
+                self._moves = [tuple(m) for m in data]
+            elif isinstance(data, dict):
+                self._moves = [tuple(m) for m in data.get("moves", [])]
+            else:
+                return
+            self._cursor = 0
+            self._replay_to(0)
+        except Exception as e:
+            print(f"[replay] load error: {e}")
+
+    def load_moves(self, moves: list[tuple[int, int]]):
+        """Called from Live tab to load last completed game."""
+        self._moves = list(moves)
+        self._cursor = 0
+        self._replay_to(0)
+
+    def _replay_to(self, n: int):
+        from engine import HexGame
+        from engine.analysis import fork_cells, potential_map
+        g = HexGame()
+        for move in self._moves[:n]:
+            g.make(*move)
+        self._game = g
+        self._hex.update_state(
+            game=g,
+            forks_p1=fork_cells(g, 1),
+            forks_p2=fork_cells(g, 2),
+            potential=potential_map(g),
+            last_move=self._moves[n - 1] if n > 0 else None,
+        )
+        self._tri.update_state(
+            game=g,
+            forks_p1=fork_cells(g, 1),
+            forks_p2=fork_cells(g, 2),
+            potential=potential_map(g),
+        )
+        self._pos_lbl.setText(f"move {n}/{len(self._moves)}")
+
+    def _step_forward(self):
+        if self._cursor < len(self._moves):
+            self._cursor += 1
+            self._replay_to(self._cursor)
+        else:
+            self._timer.stop()
+
+    def _step_back(self):
+        if self._cursor > 0:
+            self._cursor -= 1
+            self._replay_to(self._cursor)
+
+
+# ── Live tab ──────────────────────────────────────────────────────────────────
+
+class LiveTab(QWidget):
+    def __init__(self, replay_tab: ReplayTab, parent=None):
+        super().__init__(parent)
+        self._replay_tab = replay_tab
         self._thread: ExperimentThread | None = None
         self._worker: ExperimentWorker | None = None
         self._move_count = 0
+        self._last_game_moves: list[tuple[int, int]] = []
 
-        # Paint throttle — buffer latest MoveEvent, flush at 30fps max
         self._pending_move: MoveEvent | None = None
         self._paint_timer = QTimer(self)
-        self._paint_timer.setInterval(33)  # ~30fps
+        self._paint_timer.setInterval(33)
         self._paint_timer.timeout.connect(self._flush_move)
 
         self._build_ui()
-        self._connect_signals()
-
-    # ── UI Construction ───────────────────────────────────────────────────────
 
     def _build_ui(self):
-        # ── Toolbar ────────────────────────────────────────────────────────
-        tb = QToolBar("Controls")
-        tb.setMovable(False)
-        tb.setIconSize(QSize(14, 14))
-        self.addToolBar(tb)
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(0)
 
-        tb.addWidget(self._label("EXPERIMENT"))
+        # Toolbar
+        tb_widget = QWidget()
+        tb_widget.setStyleSheet("background: #080f18; border-bottom: 1px solid #0d1a2a;")
+        tb_lay = QHBoxLayout(tb_widget)
+        tb_lay.setContentsMargins(6, 3, 6, 3)
+        tb_lay.setSpacing(6)
+
+        tb_lay.addWidget(_toolbar_label("EXPERIMENT"))
         self._exp_combo = QComboBox()
         for name in EXPERIMENTS:
             self._exp_combo.addItem(name)
-        tb.addWidget(self._exp_combo)
+        tb_lay.addWidget(self._exp_combo)
 
-        tb.addSeparator()
-        tb.addWidget(self._label("GAMES"))
+        tb_lay.addWidget(_toolbar_label("GAMES"))
         self._n_games_spin = QSpinBox()
         self._n_games_spin.setRange(1, 10000)
         self._n_games_spin.setValue(20)
-        tb.addWidget(self._n_games_spin)
+        tb_lay.addWidget(self._n_games_spin)
 
-        tb.addSeparator()
-        tb.addWidget(self._label("STEP ms"))
+        tb_lay.addWidget(_toolbar_label("STEP ms"))
         self._delay_slider = QSlider(Qt.Orientation.Horizontal)
         self._delay_slider.setRange(0, 500)
         self._delay_slider.setValue(0)
-        self._delay_slider.setFixedWidth(100)
+        self._delay_slider.setFixedWidth(80)
         self._delay_label = QLabel("0")
-        self._delay_label.setFixedWidth(28)
+        self._delay_label.setStyleSheet("color:#3a4a5a; font-size:10px; min-width:24px;")
         self._delay_slider.valueChanged.connect(
             lambda v: self._delay_label.setText(str(v))
         )
-        tb.addWidget(self._delay_slider)
-        tb.addWidget(self._delay_label)
+        tb_lay.addWidget(self._delay_slider)
+        tb_lay.addWidget(self._delay_label)
 
-        tb.addSeparator()
         self._def_a_chk = QCheckBox("Def-A")
         self._def_b_chk = QCheckBox("Def-B")
         self._def_b_chk.setChecked(True)
-        tb.addWidget(self._def_a_chk)
-        tb.addWidget(self._def_b_chk)
+        tb_lay.addWidget(self._def_a_chk)
+        tb_lay.addWidget(self._def_b_chk)
 
-        tb.addSeparator()
         # Overlay toggles
         self._chk_potential  = QCheckBox("Potential")
         self._chk_threats    = QCheckBox("Threats")
         self._chk_forks      = QCheckBox("Forks")
-        self._chk_axislines  = QCheckBox("Axis lines")
-        self._chk_candidates = QCheckBox("Candidates")
+        self._chk_axislines  = QCheckBox("Axes")
+        self._chk_candidates = QCheckBox("Cands")
         for chk in (self._chk_potential, self._chk_threats,
                     self._chk_forks, self._chk_axislines):
             chk.setChecked(True)
-            tb.addWidget(chk)
-        tb.addWidget(self._chk_candidates)
+            tb_lay.addWidget(chk)
+        tb_lay.addWidget(self._chk_candidates)
 
-        tb.addSeparator()
-        # View buttons
         self._center_btn = QPushButton("Center")
-        self._center_btn.setFixedWidth(56)
-        tb.addWidget(self._center_btn)
+        self._load_replay_btn = QPushButton("→ Replay")
+        self._load_replay_btn.setToolTip("Send last completed game to Replay tab")
+        tb_lay.addWidget(self._center_btn)
+        tb_lay.addWidget(self._load_replay_btn)
 
-        # Spacer
-        spacer = QWidget()
-        spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-        tb.addWidget(spacer)
+        tb_lay.addStretch()
 
         self._run_btn  = QPushButton("Run")
         self._run_btn.setObjectName("run_btn")
         self._stop_btn = QPushButton("Stop")
         self._stop_btn.setObjectName("stop_btn")
         self._stop_btn.setEnabled(False)
-        tb.addWidget(self._run_btn)
-        tb.addWidget(self._stop_btn)
+        tb_lay.addWidget(self._run_btn)
+        tb_lay.addWidget(self._stop_btn)
 
-        # ── Central area ───────────────────────────────────────────────────
-        central = QWidget()
-        self.setCentralWidget(central)
-        main_layout = QVBoxLayout(central)
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(0)
+        lay.addWidget(tb_widget)
 
-        # Top: visualisation panels + analysis
+        # Panels
+        self._hex_grid     = HexGridWidget()
+        self._tri_grid     = TriGridWidget()
+        self._threat_graph = ThreatGraphWidget()
+        self._analysis     = AnalysisPanel()
+
         top_splitter = QSplitter(Qt.Orientation.Horizontal)
         top_splitter.setHandleWidth(1)
-
-        self._hex_grid    = HexGridWidget()
-        self._tri_grid    = TriGridWidget()
-        self._threat_graph= ThreatGraphWidget()
-        self._analysis    = AnalysisPanel()
-
-        # Wrap each canvas in a titled frame
-        top_splitter.addWidget(self._titled("HEX GRID", self._hex_grid))
-        top_splitter.addWidget(self._titled("TRI GRID", self._tri_grid))
-        top_splitter.addWidget(self._titled("THREAT GRAPH", self._threat_graph))
+        top_splitter.addWidget(_titled("HEX GRID",    self._hex_grid))
+        top_splitter.addWidget(_titled("TRI GRID",    self._tri_grid))
+        top_splitter.addWidget(_titled("THREAT GRAPH",self._threat_graph))
         top_splitter.addWidget(self._analysis)
+        top_splitter.setSizes([420, 300, 300, 220])
 
-        top_splitter.setSizes([420, 340, 340, 240])
-
-        # Bottom: log
         self._log = QTextEdit()
         self._log.setReadOnly(True)
-        self._log.setFixedHeight(120)
+        self._log.setFixedHeight(110)
 
         v_splitter = QSplitter(Qt.Orientation.Vertical)
         v_splitter.setHandleWidth(1)
         v_splitter.addWidget(top_splitter)
         v_splitter.addWidget(self._log)
-        v_splitter.setSizes([760, 120])
+        v_splitter.setSizes([760, 110])
 
-        main_layout.addWidget(v_splitter)
+        lay.addWidget(v_splitter)
 
-        # Status bar
-        self._status_lbl = QLabel("ready")
-        self._status_lbl.setStyleSheet(
-            "color: #3a4a5a; font-size: 10px; padding: 2px 8px;"
-        )
-        self.statusBar().addPermanentWidget(self._status_lbl, 1)
-        self.statusBar().setStyleSheet(
-            "background: #080f18; border-top: 1px solid #0d1a2a;"
-        )
-
-    def _label(self, text: str) -> QLabel:
-        lbl = QLabel(text)
-        lbl.setStyleSheet(
-            "color: #3a4a5a; font-size: 10px; letter-spacing: 1px; padding: 0 4px;"
-        )
-        return lbl
-
-    def _titled(self, title: str, widget: QWidget) -> QWidget:
-        frame = QWidget()
-        lay = QVBoxLayout(frame)
-        lay.setContentsMargins(0, 0, 0, 0)
-        lay.setSpacing(0)
-        hdr = QLabel(title)
-        hdr.setStyleSheet(
-            "background: #080f18; color: #003580; font-family: Consolas; "
-            "font-size: 10px; font-weight: bold; letter-spacing: 2px; "
-            "padding: 3px 8px; border-bottom: 1px solid #0d1a2a;"
-        )
-        lay.addWidget(hdr)
-        lay.addWidget(widget)
-        return frame
-
-    # ── Signal wiring ─────────────────────────────────────────────────────────
-
-    def _connect_signals(self):
+        # Wire
         self._run_btn.clicked.connect(self._start_experiment)
         self._stop_btn.clicked.connect(self._stop_experiment)
-        self._center_btn.clicked.connect(self._hex_grid.center_on_board)
+        self._load_replay_btn.clicked.connect(self._send_to_replay)
+        self._center_btn.clicked.connect(self._center_all)
 
-        self._chk_potential.toggled.connect(
-            lambda v: self._set_overlay("potential", v))
-        self._chk_threats.toggled.connect(
-            lambda v: self._set_overlay("threats", v))
-        self._chk_forks.toggled.connect(
-            lambda v: self._set_overlay("forks", v))
-        self._chk_axislines.toggled.connect(
-            lambda v: self._set_overlay("axis_lines", v))
-        self._chk_candidates.toggled.connect(
-            lambda v: self._set_overlay("candidates", v))
+        self._chk_potential.toggled.connect( lambda v: self._overlay("potential",  v))
+        self._chk_threats.toggled.connect(   lambda v: self._overlay("threats",    v))
+        self._chk_forks.toggled.connect(     lambda v: self._overlay("forks",      v))
+        self._chk_axislines.toggled.connect( lambda v: self._overlay("axis_lines", v))
+        self._chk_candidates.toggled.connect(lambda v: self._overlay("candidates", v))
 
-    def _set_overlay(self, name: str, value: bool):
+    def _overlay(self, name: str, value: bool):
         setattr(self._hex_grid, f"show_{name}", value)
         self._hex_grid.update()
+
+    def _center_all(self):
+        self._hex_grid.center_on_board()
+        self._tri_grid._offset.setX(self._hex_grid._offset.x())
+        self._tri_grid._offset.setY(self._hex_grid._offset.y())
+        self._tri_grid._cell_size = self._hex_grid._cell_size
+        self._tri_grid.update()
+
+    def _send_to_replay(self):
+        if self._last_game_moves:
+            self._replay_tab.load_moves(self._last_game_moves)
 
     # ── Experiment control ────────────────────────────────────────────────────
 
     def _start_experiment(self):
-        if self._thread and self._thread.isRunning():
-            return
+        # Clean up any previous (finished) thread before creating a new one
+        if self._thread is not None:
+            if self._thread.isRunning():
+                return
+            self._thread = None
+            self._worker = None
 
         exp_name = self._exp_combo.currentText()
         exp_key  = EXPERIMENTS[exp_name]
@@ -361,7 +475,6 @@ class MainWindow(QMainWindow):
 
         self._run_btn.setEnabled(False)
         self._stop_btn.setEnabled(True)
-        self._status_lbl.setText(f"running: {exp_name}")
 
         self._paint_timer.start()
         thread.start()
@@ -372,18 +485,15 @@ class MainWindow(QMainWindow):
             self._thread.stop()
         self._run_btn.setEnabled(True)
         self._stop_btn.setEnabled(False)
-        self._status_lbl.setText("stopped")
 
     # ── Event handlers ────────────────────────────────────────────────────────
 
     def _on_move(self, evt: MoveEvent):
         self._move_count += 1
         self._pending_move = evt
-        # Analysis panel always gets every move (cheap label updates)
         self._analysis.on_move(evt)
 
     def _flush_move(self):
-        """Called by paint timer at 30fps — drain the latest buffered move event."""
         evt = self._pending_move
         if evt is None:
             return
@@ -413,42 +523,74 @@ class MainWindow(QMainWindow):
 
     def _on_game(self, evt: GameEvent):
         self._analysis.on_game(evt)
+        self._last_game_moves = list(evt.move_history)  # ordered; used by replay tab
+        # Store ordered move history from the event
         w = evt.winner
         tag = f"P{w}" if w else "timeout"
-        self._status_lbl.setText(
+        self.window().statusBar().showMessage(
             f"game {evt.game_number} | winner: {tag} | moves: {evt.move_count}"
         )
 
     def _on_log(self, line: str):
         self._log.append(line)
-        sb = self._log.verticalScrollBar()
-        sb.setValue(sb.maximum())
+        self._log.verticalScrollBar().setValue(
+            self._log.verticalScrollBar().maximum()
+        )
 
     def _on_finished(self, stats: ExperimentStats):
         self._paint_timer.stop()
-        self._flush_move()  # ensure last frame paints
+        self._flush_move()
         self._analysis.on_stats(stats)
         self._run_btn.setEnabled(True)
         self._stop_btn.setEnabled(False)
+        self._thread = None
+        self._worker = None
         w1 = stats.wins.get(1, 0)
         w2 = stats.wins.get(2, 0)
         wd = stats.wins.get(0, 0)
-        self._status_lbl.setText(
-            f"done | P1: {w1}  P2: {w2}  timeout: {wd} | "
-            f"patterns: {len(stats.pattern_freq)}"
+        self.window().statusBar().showMessage(
+            f"done | P1: {w1}  P2: {w2}  timeout: {wd} | patterns: {len(stats.pattern_freq)}"
         )
-        self._log.append(f"■ experiment complete")
+        self._log.append("■ experiment complete")
 
     def _on_error(self, msg: str):
         self._paint_timer.stop()
         self._log.append(f"[ERROR] {msg}")
         self._run_btn.setEnabled(True)
         self._stop_btn.setEnabled(False)
-        self._status_lbl.setText("error")
+        self._thread = None
+        self._worker = None
+
+
+# ── Main window ───────────────────────────────────────────────────────────────
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("HexGo Theory")
+        self.resize(1600, 900)
+        self.setStyleSheet(STYLE)
+
+        tabs = QTabWidget()
+        tabs.setDocumentMode(True)
+
+        self._replay_tab = ReplayTab()
+        self._live_tab   = LiveTab(self._replay_tab)
+
+        tabs.addTab(self._live_tab,   "LIVE")
+        tabs.addTab(self._replay_tab, "REPLAY")
+
+        self.setCentralWidget(tabs)
+
+        self.statusBar().setStyleSheet(
+            "background: #080f18; border-top: 1px solid #0d1a2a; "
+            "color: #3a4a5a; font-size: 10px;"
+        )
 
     def closeEvent(self, event):
-        if self._thread and self._thread.isRunning():
-            self._thread.stop()
+        t = self._live_tab._thread
+        if t and t.isRunning():
+            t.stop()
         event.accept()
 
 
@@ -458,15 +600,14 @@ def main():
     app = QApplication(sys.argv)
     app.setApplicationName("HexGo Theory")
 
-    # Force dark palette at OS level too
     palette = QPalette()
-    palette.setColor(QPalette.ColorRole.Window,      QColor("#050a0f"))
-    palette.setColor(QPalette.ColorRole.WindowText,  QColor("#c8d4e0"))
-    palette.setColor(QPalette.ColorRole.Base,        QColor("#080f18"))
-    palette.setColor(QPalette.ColorRole.Text,        QColor("#c8d4e0"))
-    palette.setColor(QPalette.ColorRole.Button,      QColor("#0d1a2a"))
-    palette.setColor(QPalette.ColorRole.ButtonText,  QColor("#c8d4e0"))
-    palette.setColor(QPalette.ColorRole.Highlight,   QColor("#003580"))
+    palette.setColor(QPalette.ColorRole.Window,          QColor("#050a0f"))
+    palette.setColor(QPalette.ColorRole.WindowText,      QColor("#c8d4e0"))
+    palette.setColor(QPalette.ColorRole.Base,            QColor("#080f18"))
+    palette.setColor(QPalette.ColorRole.Text,            QColor("#c8d4e0"))
+    palette.setColor(QPalette.ColorRole.Button,          QColor("#0d1a2a"))
+    palette.setColor(QPalette.ColorRole.ButtonText,      QColor("#c8d4e0"))
+    palette.setColor(QPalette.ColorRole.Highlight,       QColor("#003580"))
     palette.setColor(QPalette.ColorRole.HighlightedText, QColor("#e8e8e8"))
     app.setPalette(palette)
 

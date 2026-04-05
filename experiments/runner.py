@@ -46,6 +46,7 @@ class GameEvent:
     winner: int | None
     move_count: int
     duration: float
+    move_history: list[tuple[int, int]]   # ordered sequence of all moves
     moves_p1: list[tuple[int, int]]
     moves_p2: list[tuple[int, int]]
     correlation: dict[int, float]
@@ -195,6 +196,7 @@ class ExperimentWorker(QObject):
                 winner=game.winner,
                 move_count=move_count,
                 duration=dur,
+                move_history=list(game.move_history),
                 moves_p1=moves_p1,
                 moves_p2=moves_p2,
                 correlation=corr,

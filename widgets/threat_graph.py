@@ -70,7 +70,8 @@ class ThreatGraphWidget(QWidget):
         self._drag_offset_start: Optional[QPointF] = None
         self.setMouseTracking(True)
 
-        self._font = QFont("Consolas, Courier New, monospace")
+        self._font = QFont()
+        self._font.setFamilies(["Consolas", "Courier New", "monospace"])
         self._font.setPixelSize(11)
 
     def update_state(
@@ -137,7 +138,7 @@ class ThreatGraphWidget(QWidget):
             if cell not in top_set:
                 del self._nodes[cell]
 
-        self._node_sizes = {c: 4.0 + membership[c] * 0.8 for c in top_cells}
+        self._node_sizes = {c: min(3.0 + membership[c] * 0.25, 8.0) for c in top_cells}
 
         # Build edge list
         self._edges = []
@@ -238,7 +239,7 @@ class ThreatGraphWidget(QWidget):
             player = self.game.board.get(cell) if self.game else None
             is_threat = cell in self.threats_p1 or cell in self.threats_p2
             is_fork   = cell in self.forks_p1   or cell in self.forks_p2
-            radius = self._node_sizes.get(cell, 5.0)
+            radius = self._node_sizes.get(cell, 3.0)
 
             if player == 1:
                 col = P1_COL
