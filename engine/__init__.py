@@ -11,3 +11,4 @@ if str(HEXGO_ROOT) not in sys.path:
 
 from game import HexGame, AXES, WIN_LENGTH  # noqa: F401
 from elo import EisensteinGreedyAgent, RandomAgent  # noqa: F401
+from engine.agents import ForkAwareAgent, PotentialGradientAgent, ComboAgent  # noqa: F401

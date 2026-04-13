@@ -68,6 +68,9 @@ class HexGridWidget(QWidget):
         self.show_candidates = False
         self.show_coords     = False
 
+        # Move-number lookup (precomputed in update_state to avoid O(n²) in paint)
+        self._move_index: dict[tuple, int] = {}
+
         # View state
         self._cell_size = 22.0
         self._offset = QPointF(0.0, 0.0)
@@ -98,6 +101,10 @@ class HexGridWidget(QWidget):
         self.forks_p2   = forks_p2 or {}
         self.potential  = potential or {}
         self.last_move  = last_move
+        # Precompute O(1) lookup: cell → move index (avoids O(n²) .index() in paint)
+        self._move_index: dict[tuple, int] = {
+            cell: i for i, cell in enumerate(game.move_history)
+        } if game else {}
         self.update()
 
     def reset_view(self):
@@ -252,11 +259,13 @@ class HexGridWidget(QWidget):
             if player and self._cell_size >= 16:
                 painter.setFont(self._font)
                 painter.setPen(P1_TEXT if player == 1 else P2_TEXT)
-                try:
-                    idx = game.move_history.index((q, r))
+                idx = self._move_index.get((q, r))
+                if idx is not None:
                     label = str(idx + 1)
-                except ValueError:
-                    label = f"{q},{r}" if self.show_coords else ""
+                elif self.show_coords:
+                    label = f"{q},{r}"
+                else:
+                    label = ""
                 if label:
                     painter.drawText(
                         QRectF(cx - 12, cy - 8, 24, 16),

@@ -46,7 +46,8 @@ class GameEvent:
     winner: int | None
     move_count: int
     duration: float
-    move_history: list[tuple[int, int]]   # ordered sequence of all moves
+    move_history: list[tuple[int, int]]    # ordered sequence of all moves
+    player_history: list[int]              # player who made each move (parallel to move_history)
     moves_p1: list[tuple[int, int]]
     moves_p2: list[tuple[int, int]]
     correlation: dict[int, float]
@@ -191,12 +192,14 @@ class ExperimentWorker(QObject):
             for fp, cnt in pat_counts.items():
                 stats.pattern_freq[fp] = stats.pattern_freq.get(fp, 0) + cnt
 
+            player_history = list(game.player_history) if hasattr(game, 'player_history') else []
             g_evt = GameEvent(
                 game_number=game_idx + 1,
                 winner=game.winner,
                 move_count=move_count,
                 duration=dur,
                 move_history=list(game.move_history),
+                player_history=player_history,
                 moves_p1=moves_p1,
                 moves_p2=moves_p2,
                 correlation=corr,

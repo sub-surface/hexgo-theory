@@ -123,14 +123,17 @@ class ThreatGraphWidget(QWidget):
         top_set = set(top_cells)
 
         # Initialise new nodes at random (preserve existing positions)
-        cx, cy = self.width() / 2, self.height() / 2
+        # Guard against zero size during first paint before widget is shown
+        w_px = self.width()  if self.width()  > 10 else 400
+        h_px = self.height() if self.height() > 10 else 400
+        cx, cy = w_px / 2, h_px / 2
         for cell in top_cells:
             if cell not in self._nodes:
                 angle = random.uniform(0, 2 * math.pi)
-                r = random.uniform(20, min(cx, cy) * 0.8)
+                r_rand = random.uniform(20, min(cx, cy) * 0.8)
                 self._nodes[cell] = QPointF(
-                    cx + r * math.cos(angle),
-                    cy + r * math.sin(angle),
+                    cx + r_rand * math.cos(angle),
+                    cy + r_rand * math.sin(angle),
                 )
 
         # Remove old nodes
@@ -224,22 +227,33 @@ class ThreatGraphWidget(QWidget):
         painter.translate(self._offset)
         painter.scale(self._scale, self._scale)
 
-        # Draw edges
+        # Draw edges (in scaled space — line width auto-corrected below)
         for (ca, cb, a_idx, w) in self._edges:
             if ca not in self._nodes or cb not in self._nodes:
                 continue
             col = QColor(EDGE_COLS[a_idx % 3])
             col.setAlpha(min(200, 50 + w * 30))
-            painter.setPen(QPen(col, max(0.5, w * 0.4)))
+            # Divide pen width by scale so lines stay thin regardless of zoom
+            painter.setPen(QPen(col, max(0.5, w * 0.4) / self._scale))
             painter.drawLine(self._nodes[ca], self._nodes[cb])
 
-        # Draw nodes
+        # Draw nodes in screen-space to avoid radii scaling with zoom.
+        # We reset the transform per node and map the node position manually.
+        painter.resetTransform()
         painter.setFont(self._font)
+
+        def _to_screen(pt: QPointF) -> QPointF:
+            return QPointF(
+                pt.x() * self._scale + self._offset.x(),
+                pt.y() * self._scale + self._offset.y(),
+            )
+
         for cell, pt in self._nodes.items():
+            sp = _to_screen(pt)
             player = self.game.board.get(cell) if self.game else None
             is_threat = cell in self.threats_p1 or cell in self.threats_p2
             is_fork   = cell in self.forks_p1   or cell in self.forks_p2
-            radius = self._node_sizes.get(cell, 3.0)
+            radius = self._node_sizes.get(cell, 3.0)   # always in pixels
 
             if player == 1:
                 col = P1_COL
@@ -254,12 +268,12 @@ class ThreatGraphWidget(QWidget):
 
             painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(QBrush(col))
-            painter.drawEllipse(pt, radius, radius)
+            painter.drawEllipse(sp, radius, radius)
 
             if is_fork:
                 painter.setPen(QPen(FORK_COL, 1.0))
                 painter.setBrush(Qt.BrushStyle.NoBrush)
-                painter.drawEllipse(pt, radius + 2.5, radius + 2.5)
+                painter.drawEllipse(sp, radius + 2.5, radius + 2.5)
 
         painter.end()
 

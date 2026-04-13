@@ -74,6 +74,9 @@ class SparklineWidget(QWidget):
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self._data: list[float] = []
         self._baseline: float = 1.0
+        self._font = QFont()
+        self._font.setFamilies(["Consolas", "Courier New", "monospace"])
+        self._font.setPixelSize(11)
 
     def set_data(self, values: list[float], baseline: float = 1.0):
         self._data = values
@@ -120,8 +123,7 @@ class SparklineWidget(QWidget):
 
         if self._label:
             painter.setPen(DIM)
-            f = QFont(); f.setFamilies(["Consolas", "Courier New", "monospace"]); f.setPixelSize(11)
-            painter.setFont(f)
+            painter.setFont(self._font)
             painter.drawText(QRectF(pad, pad, inner_w, 12),
                              Qt.AlignmentFlag.AlignLeft, self._label)
 
@@ -136,6 +138,9 @@ class MiniBarWidget(QWidget):
         self.setFixedHeight(height)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self._bars: list[tuple[str, float, QColor]] = []
+        self._font = QFont()
+        self._font.setFamilies(["Consolas", "Courier New", "monospace"])
+        self._font.setPixelSize(10)
 
     def set_bars(self, bars: list[tuple[str, float, QColor]]):
         self._bars = bars
@@ -154,8 +159,7 @@ class MiniBarWidget(QWidget):
         bw = w / n
         pad_y = 4
 
-        f = QFont(); f.setFamilies(["Consolas", "Courier New", "monospace"]); f.setPixelSize(10)
-        painter.setFont(f)
+        painter.setFont(self._font)
         for i, (lbl, v, col) in enumerate(self._bars):
             bh = max(1.0, (v / max_v) * (h - pad_y - 12))
             x = i * bw

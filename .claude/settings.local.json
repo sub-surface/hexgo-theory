@@ -1,0 +1,11 @@
+{
+  "disabledMcpjsonServers": [
+    "roblox"
+  ],
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p C:/Users/Leon/Desktop/Psychograph/hexgo-theory/papers C:/Users/Leon/Desktop/Psychograph/hexgo-theory/notebooks)",
+      "Bash(cp \"C:/Users/Leon/Downloads/2601.03220v2.pdf\" \"C:/Users/Leon/Desktop/Psychograph/hexgo-theory/papers/finzi-2026-epiplexity.pdf\")"
+    ]
+  }
+}
