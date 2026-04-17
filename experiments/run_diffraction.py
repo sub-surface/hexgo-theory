@@ -49,6 +49,25 @@ from engine.diffraction import (
 )
 
 
+def _delone_bounds(pts: np.ndarray) -> tuple[float, float]:
+    """
+    Return (d_min, d_max) where d_min = min pairwise distance and d_max =
+    max first-neighbour (nearest-neighbour) distance across the point set.
+    Proposition P5 asks both to be bounded as game length grows.
+    """
+    N = pts.shape[0]
+    if N < 2:
+        return (float("nan"), float("nan"))
+    # Broadcast pairwise distances — O(N^2) in memory; fine for N ~ 200.
+    diff = pts[:, None, :] - pts[None, :, :]
+    dist = np.sqrt((diff * diff).sum(axis=2))
+    mask = ~np.eye(N, dtype=bool)
+    d_min = float(dist[mask].min())
+    nearest = np.where(mask, dist, np.inf).min(axis=1)
+    d_max = float(nearest.max())
+    return d_min, d_max
+
+
 def _self_play(seed: int, horizon: int) -> HexGame:
     random.seed(seed)
     black = make_combo_v2_ca()
@@ -84,6 +103,8 @@ def _run(n_games: int, horizon: int, burn_in: int, grid: int,
     bragg_sp = []          # self-play Bragg-99 scores
     bragg_rand = []        # Random-point control at matched N
     sizes = []             # |S| for each game
+    dmins = []             # Delone d_min per game (P5)
+    dmaxs = []             # Delone d_max per game (P5)
     mean_I = None          # running mean of I(k) heatmap
 
     t0 = time.perf_counter()
@@ -96,6 +117,9 @@ def _run(n_games: int, horizon: int, burn_in: int, grid: int,
             continue
         sizes.append(N)
         pts = axial_to_cart(pts_axial)
+        d_min, d_max = _delone_bounds(pts)
+        dmins.append(d_min)
+        dmaxs.append(d_max)
 
         _, _, I = diffraction_intensity(pts, k_extent=k_extent, grid=grid,
                                         device=device, normalise=True)
@@ -147,6 +171,8 @@ def _run(n_games: int, horizon: int, burn_in: int, grid: int,
         "bragg_rand":   [float(x) for x in bragg_rand],
         "bragg_hex_control": float(bragg_lat),
         "N_per_game":   [int(x) for x in sizes],
+        "d_min":        [float(x) for x in dmins],
+        "d_max":        [float(x) for x in dmaxs],
         "mean_I":       mean_I.detach().cpu().numpy().tolist(),
         "k_extent":     float(k_extent),
         "grid":         int(grid),
@@ -235,6 +261,36 @@ def _verdict(results: dict) -> str:
     else:
         msg.append("→ P4 falsified at current horizon: long-game spectrum "
                    "indistinguishable from random.")
+
+    # P5 — Delone property: bounded d_min and bounded d_max.
+    if "d_min" in results and results["d_min"]:
+        dm = np.array(results["d_min"])
+        dM = np.array(results["d_max"])
+        msg += [
+            "",
+            f"P5 Delone bounds (all games, n={len(dm)}):",
+            f"  d_min  min={dm.min():.3f}  mean={dm.mean():.3f}  max={dm.max():.3f}",
+            f"  d_max  min={dM.min():.3f}  mean={dM.mean():.3f}  max={dM.max():.3f}",
+        ]
+        # P5 is a Delone property: d_min bounded below and d_max bounded
+        # above, with both bounds independent of game length.
+        # On a lattice d_min >= 1 is tautological; the substantive content is
+        # that d_max does not grow with N, i.e. no arbitrarily large holes.
+        sizes_arr = np.array(results["N_per_game"], dtype=np.float32)
+        # Pearson correlation of d_max with N (long games should NOT have
+        # larger d_max if the point set is Delone).
+        if len(dM) > 2:
+            corr = float(np.corrcoef(sizes_arr, dM)[0, 1])
+        else:
+            corr = float("nan")
+        msg.append(f"  corr(N, d_max) = {corr:+.2f}")
+        if dm.min() >= 0.9 and dM.max() <= 6.0 and (np.isnan(corr) or corr < 0.5):
+            msg.append("→ P5 supported: Delone bounds hold, no "
+                       "growth of d_max with game length.")
+        else:
+            msg.append(f"→ P5 equivocal: d_min_floor={dm.min():.3f}, "
+                       f"d_max_ceiling={dM.max():.3f}, corr={corr:+.2f}")
+
     return "\n".join(msg)
 
 

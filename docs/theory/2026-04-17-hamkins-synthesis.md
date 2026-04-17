@@ -66,6 +66,6 @@ Each claim below is intended to be tested by one experiment in `experiments/`, w
 | P2 | **supported on both clauses** | `results/mirror_agent.json` — Mirror non-loss vs Random = 1.00; Mirror-P2 wins vs Combo = 0.14 |
 | P3 | preliminary support | `results/epiplexity_scan.json` — Combo's $|P|/T$ slope below Random's, but no Pisot confirmation yet |
 | P4 | **supported in long self-play** | `results/diffraction_p4.json` — long-game Bragg99 = 0.51 ± 0.13 (n=9) vs short-game 0.24 ± 0.09 vs random 0.055; `figures/fig_diffraction_p4.png` shows unambiguous hex-lattice Bragg peaks. Length-dependence is itself a non-trivial finding: quasi-crystalline order emerges as the agents draw out play, not in short decisive games. |
-| P5 | not yet tested | trivial once Module 5 lands |
+| P5 | **supported** | `results/diffraction_p4.json` — d_min ∈ [1.0, 2.0], d_max ∈ [1.0, 4.58], corr(N, d_max) = +0.07. Delone property holds with no holes growing with game length. |
 
 The work order now is P1-fix → MirrorAgent → diffraction, which also aligns with the pending-experiment priorities listed in [CLAUDE.md](../../CLAUDE.md) §"Current research state".
