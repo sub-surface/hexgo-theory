@@ -218,3 +218,126 @@ class ComboAgent:
 
     def choose_move(self, game: HexGame) -> tuple[int, int]:
         return self._pg.choose_move(game)
+
+
+# ── MirrorAgent ───────────────────────────────────────────────────────────────
+
+class MirrorAgent:
+    """
+    Point-reflection pairing strategy: respond to opponent moves through the
+    origin. Port of Hamkins-Leonessi §3 mirroring idea (Infinite Hex is a draw,
+    2022) adapted to HexGo's Z[omega] lattice.
+
+    Strategy. Maintain a queue of opponent stones whose reflection we still
+    owe. On each call to choose_move, pop the oldest and play -c. If the
+    reflection is occupied, fall back to a nearest-empty-neighbour response,
+    then to an immediate-win / immediate-block, then a random legal cell.
+
+    Limitations.
+    - Not a proven winning / drawing strategy for HexGo: a Connect-6 line
+      through c does NOT in general pass through -c (except along axes through
+      the origin), so this is a weaker-than-Hamkins pairing. The empirical
+      target is Proposition P2 in docs/theory/2026-04-17-hamkins-synthesis.md:
+      non-loss >= 90% vs Random, and strictly < 50% as second player vs any
+      stronger agent (consistent with strategy-stealing).
+    - Does not know its own history. We reconstruct the "owed" queue on each
+      call from game.move_history + player_history, so the agent is stateless
+      between calls and safe to use across multiprocessing workers.
+    """
+
+    def __init__(self, name: str = "mirror"):
+        self.name = name
+
+    def _pairing(self, cell: tuple[int, int]) -> tuple[int, int]:
+        return (-cell[0], -cell[1])
+
+    def _immediate_response(self, game: HexGame, player: int
+                           ) -> tuple[int, int] | None:
+        opponent = 3 - player
+        legal = set(game.legal_moves())
+        # Immediate win.
+        for axes in (AXES,):
+            for (dq, dr) in axes:
+                for (cq, cr), owner in game.board.items():
+                    if owner != player:
+                        continue
+                    for start in range(-5, 1):
+                        cells = [(cq + (start + i) * dq,
+                                  cr + (start + i) * dr) for i in range(WIN_LENGTH)]
+                        occ = [game.board.get(c, 0) for c in cells]
+                        if occ.count(player) == WIN_LENGTH - 1 and occ.count(0) == 1:
+                            empty = cells[occ.index(0)]
+                            if empty in legal:
+                                return empty
+        # Immediate block.
+        for axes in (AXES,):
+            for (dq, dr) in axes:
+                for (cq, cr), owner in game.board.items():
+                    if owner != opponent:
+                        continue
+                    for start in range(-5, 1):
+                        cells = [(cq + (start + i) * dq,
+                                  cr + (start + i) * dr) for i in range(WIN_LENGTH)]
+                        occ = [game.board.get(c, 0) for c in cells]
+                        if occ.count(opponent) == WIN_LENGTH - 1 and occ.count(0) == 1:
+                            empty = cells[occ.index(0)]
+                            if empty in legal:
+                                return empty
+        return None
+
+    def _pending_reflections(self, game: HexGame) -> list[tuple[int, int]]:
+        """
+        Stones opponent has played whose reflection we have not yet played.
+        Returned in play order (oldest first).
+        """
+        me = game.current_player
+        opp = 3 - me
+        opp_stones = [m for m, p in zip(game.move_history, game.player_history)
+                      if p == opp]
+        my_stones = set(m for m, p in zip(game.move_history, game.player_history)
+                        if p == me)
+        pending: list[tuple[int, int]] = []
+        consumed = set()
+        for s in opp_stones:
+            ref = self._pairing(s)
+            if ref in my_stones and ref not in consumed:
+                consumed.add(ref)
+                continue
+            pending.append(s)
+        return pending
+
+    def choose_move(self, game: HexGame) -> tuple[int, int]:
+        legal = set(game.legal_moves())
+        if not legal and not game.board:
+            return (0, 0)
+
+        # Tactical override: if we can win now, take it; if opponent threatens
+        # to win next ply, block it. Mirroring alone would lose if we ignored
+        # an opponent 5-of-6.
+        resp = self._immediate_response(game, game.current_player)
+        if resp is not None:
+            return resp
+
+        # Respond to the oldest unpaired opponent stone. The reflected cell
+        # is usually outside the adjacency-frontier `legal` set, so we only
+        # check that it is empty (HexGame.make() accepts any empty cell).
+        for opp_stone in self._pending_reflections(game):
+            ref = self._pairing(opp_stone)
+            if ref not in game.board:
+                return ref
+            # Reflection occupied: take the closest empty neighbour in legal.
+            best = None
+            best_d = float("inf")
+            for c in legal:
+                d = abs(c[0] - ref[0]) + abs(c[1] - ref[1]) + \
+                    abs((c[0] + c[1]) - (ref[0] + ref[1]))
+                if d < best_d:
+                    best_d = d
+                    best = c
+            if best is not None:
+                return best
+
+        # Opening move (no opponent stones yet) — play origin if legal.
+        if (0, 0) not in game.board:
+            return (0, 0)
+        return random.choice(list(legal))

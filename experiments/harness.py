@@ -35,7 +35,7 @@ if _REAL_HEXGO.exists() and str(_REAL_HEXGO) not in sys.path:
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from engine import HexGame, EisensteinGreedyAgent, RandomAgent
-from engine.agents import ForkAwareAgent, PotentialGradientAgent, ComboAgent
+from engine.agents import ForkAwareAgent, PotentialGradientAgent, ComboAgent, MirrorAgent
 from engine.ca_policy import (
     make_greedy_ca,
     make_fork_aware_ca,
@@ -88,6 +88,10 @@ def _f_ca_combo_v2() -> object:
     return make_combo_v2_ca()
 
 
+def _f_mirror() -> object:
+    return MirrorAgent()
+
+
 def default_registry() -> dict[str, Callable[[], object]]:
     """Top-level factories keyed by short name."""
     return {
@@ -101,6 +105,7 @@ def default_registry() -> dict[str, Callable[[], object]]:
         "ca_potential":   _f_ca_potential,
         "ca_combo":       _f_ca_combo,
         "ca_combo_v2":    _f_ca_combo_v2,
+        "mirror":         _f_mirror,
     }
 
 
@@ -126,9 +131,13 @@ def _play_one(args: tuple[str, str, int, int]) -> tuple[int, int]:
         if not legal:
             break
         mv = agent.choose_move(g)
-        if mv not in set(legal):
+        # Accept any empty cell that HexGame.make() will accept, not just
+        # the candidate frontier — MirrorAgent plays at -c which may be far.
+        if mv in g.board:
             mv = random.choice(legal)
-        g.make(*mv)
+        if not g.make(*mv):
+            mv = random.choice(legal)
+            g.make(*mv)
         mc += 1
     return (g.winner or 0, mc)
 
