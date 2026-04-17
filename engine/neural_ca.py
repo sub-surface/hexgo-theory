@@ -294,6 +294,272 @@ def _erdos_selfridge_first_conv(model: NeuralCA, alpha: float = 2.0) -> None:
                 hex_conv.conv.bias[ch] = 0.0
 
 
+# ── Self-play policy-gradient training ──────────────────────────────────────
+#
+# REINFORCE with a running-mean baseline. The trainee plays Black against a
+# frozen copy of itself playing White (roles swapped on odd-indexed games).
+# Per-move cross-entropy is computed over the legal-cell set within the
+# encoded window; the reward is the *final* game outcome from the mover's
+# perspective (±1) with optional γ-discount from the end of the game.
+#
+# Why frozen-copy self-play rather than fresh-vs-fresh: freezes the opponent
+# for a small window of games so the policy has a stationary target to
+# improve against. Without this the policy chases itself and learning is
+# chaotic on a 12k-param model with no value head.
+
+@torch.no_grad()
+def _sample_move(agent: NeuralCAAgent, game, temperature: float,
+                 rng: torch.Generator) -> tuple[tuple[int, int], torch.Tensor,
+                                                torch.Tensor, tuple[int, int]]:
+    """Sample a move from softmax(scores / T) over legal cells.
+
+    Returns ((q, r), log_prob, encoded_tensor, (q_min, r_min)) where
+    log_prob is a 0-d CPU tensor and encoded_tensor stays on agent.device.
+    The encoded_tensor + chosen cell are sufficient to recompute a
+    differentiable log-prob during the gradient pass.
+    """
+    legal = list(game.legal_moves())
+    if not legal:
+        raise RuntimeError("no legal moves")
+
+    tensor, (q_min, r_min, H, W), _ = agent._encode(game)
+    scores = agent.model(tensor)[0, 0]  # (H, W)
+
+    # Extract scores at legal cells; softmax over those.
+    idx_rows = []
+    idx_cols = []
+    legal_in_window = []
+    for (q, r) in legal:
+        col = q - q_min
+        row = r - r_min
+        if 0 <= row < H and 0 <= col < W:
+            idx_rows.append(row)
+            idx_cols.append(col)
+            legal_in_window.append((q, r))
+    if not legal_in_window:
+        # Fall back to uniform over legal.
+        i = int(torch.randint(0, len(legal), (1,), generator=rng).item())
+        return (legal[i], torch.tensor(0.0), tensor, (q_min, r_min))
+
+    idx_rows_t = torch.tensor(idx_rows, device=agent.device)
+    idx_cols_t = torch.tensor(idx_cols, device=agent.device)
+    legal_scores = scores[idx_rows_t, idx_cols_t] / max(temperature, 1e-6)
+    probs = torch.softmax(legal_scores, dim=0)
+    probs_cpu = probs.detach().cpu()
+    pick = int(torch.multinomial(probs_cpu, 1, generator=rng).item())
+    log_prob = torch.log(probs_cpu[pick] + 1e-12)
+    return legal_in_window[pick], log_prob, tensor, (q_min, r_min)
+
+
+def _recompute_log_prob(agent: NeuralCAAgent, encoded: torch.Tensor,
+                        origin: tuple[int, int], move: tuple[int, int],
+                        legal_cells: list[tuple[int, int]],
+                        temperature: float) -> torch.Tensor:
+    """Differentiable log π(move | state) at the trainee's current weights.
+
+    encoded is the (1, 3, H, W) snapshot captured at sample time. We re-run
+    the model on it (with gradients) and softmax over the legal cells.
+    """
+    q_min, r_min = origin
+    H, W = encoded.shape[2], encoded.shape[3]
+    scores = agent.model(encoded)[0, 0]
+    idx_rows = []
+    idx_cols = []
+    legal_window = []
+    for (q, r) in legal_cells:
+        col = q - q_min
+        row = r - r_min
+        if 0 <= row < H and 0 <= col < W:
+            idx_rows.append(row)
+            idx_cols.append(col)
+            legal_window.append((q, r))
+    if not legal_window or move not in legal_window:
+        return torch.tensor(0.0, device=agent.device, requires_grad=False)
+    pick = legal_window.index(move)
+    idx_rows_t = torch.tensor(idx_rows, device=agent.device)
+    idx_cols_t = torch.tensor(idx_cols, device=agent.device)
+    legal_scores = scores[idx_rows_t, idx_cols_t] / max(temperature, 1e-6)
+    log_probs = torch.log_softmax(legal_scores, dim=0)
+    return log_probs[pick]
+
+
+def _play_training_game(trainee: NeuralCAAgent, opponent: NeuralCAAgent,
+                         trainee_is_black: bool, max_moves: int,
+                         temperature: float, rng: torch.Generator):
+    """Play one training game. Returns list of trainee's
+    (encoded_tensor, origin, move, legal_cells_at_time_of_move) plus the
+    final reward from the trainee's perspective.
+
+    The encoded_tensor is kept detached and on GPU so we can recompute a
+    differentiable log-prob at gradient time — cheaper than storing a
+    CUDA graph per move."""
+    # Lazy import to avoid circular engine/__init__ reference at module load.
+    from engine import HexGame
+
+    game = HexGame()
+    trajectory = []  # (encoded, origin, move, legal_cells)
+    move_count = 0
+
+    while game.winner is None and move_count < max_moves:
+        legal = game.legal_moves()
+        if not legal:
+            break
+        is_trainee_turn = ((game.current_player == 1) == trainee_is_black)
+
+        if is_trainee_turn:
+            # Sample from the trainee's softmax for exploration + log-prob.
+            try:
+                move, _logp, encoded, origin = _sample_move(
+                    trainee, game, temperature, rng,
+                )
+            except RuntimeError:
+                break
+            trajectory.append((encoded.detach(), origin, move, list(legal)))
+        else:
+            # The opponent may be a NeuralCAAgent (frozen self-copy) or a
+            # completely different agent (teacher, e.g. ca_combo_v2). Both
+            # expose `choose_move(game) -> (q, r)`.
+            try:
+                move = opponent.choose_move(game)
+            except Exception:
+                import random as _r
+                move = _r.choice(legal)
+        if not game.make(*move):
+            # Illegal sample (shouldn't happen) — pick a random legal move.
+            import random as _r
+            move = _r.choice(legal)
+            game.make(*move)
+        move_count += 1
+
+    if game.winner is None:
+        reward = 0.0
+    elif (game.winner == 1) == trainee_is_black:
+        reward = 1.0
+    else:
+        reward = -1.0
+    return trajectory, reward
+
+
+def train_self_play(trainee: NeuralCAAgent, *,
+                     total_games: int = 200,
+                     step_every: int = 8,
+                     refresh_opponent_every: int = 32,
+                     temperature: float = 1.0,
+                     learning_rate: float = 3e-4,
+                     max_moves: int = 120,
+                     seed: int = 0,
+                     log_every: int = 16,
+                     checkpoint_path: str | None = None,
+                     teacher_factory=None,
+                     teacher_phase_games: int = 0) -> dict:
+    """REINFORCE training loop. Mutates trainee.model in place.
+
+    When ``teacher_factory`` is provided and ``teacher_phase_games > 0``,
+    the first ``teacher_phase_games`` games play against a fixed teacher
+    (e.g. ca_combo_v2) to provide dense reward signal. Pure self-play with
+    a frozen-copy opponent takes over after the teacher phase.
+
+    Returns a dict with per-game reward, per-step loss, and decisive flags.
+    """
+    import copy
+    import time
+
+    trainee.model.train(True)
+    optimiser = torch.optim.Adam(trainee.model.parameters(),
+                                  lr=learning_rate)
+
+    rng = torch.Generator(device="cpu").manual_seed(seed)
+
+    # Frozen self-copy; used in the self-play phase.
+    frozen_self = NeuralCAAgent(
+        name=f"{trainee.name}_frozen",
+        model=copy.deepcopy(trainee.model),
+        seed=seed + 7919,
+    )
+    frozen_self.model.load_state_dict(trainee.model.state_dict())
+    frozen_self.model.train(False)
+
+    teacher = teacher_factory() if teacher_factory is not None else None
+
+    running_reward = 0.0
+    history = {"reward": [], "loss": [], "decisive": [], "wall_time": []}
+    accumulated_losses: list[torch.Tensor] = []
+    games_in_step = 0
+    t0 = time.perf_counter()
+
+    for g in range(total_games):
+        trainee_is_black = (g % 2 == 0)
+        # In the teacher phase, play the teacher (if configured); otherwise
+        # play a frozen self-copy.
+        if teacher is not None and g < teacher_phase_games:
+            opponent = teacher
+        else:
+            opponent = frozen_self
+        trajectory, reward = _play_training_game(
+            trainee, opponent, trainee_is_black, max_moves, temperature, rng,
+        )
+        running_reward = 0.95 * running_reward + 0.05 * reward
+
+        if trajectory:
+            advantage = reward - running_reward
+            # Accumulate policy-gradient loss for each trainee move.
+            log_probs = []
+            for (encoded, origin, move, legal_cells) in trajectory:
+                lp = _recompute_log_prob(
+                    trainee, encoded, origin, move, legal_cells, temperature,
+                )
+                log_probs.append(lp)
+            if log_probs:
+                # Mean over moves, not sum — prevents the loss scaling with
+                # trajectory length (a long losing game otherwise dominates
+                # gradient).
+                mean_lp = torch.stack(log_probs).mean()
+                loss = -advantage * mean_lp
+                accumulated_losses.append(loss)
+
+        games_in_step += 1
+        if games_in_step >= step_every and accumulated_losses:
+            total = torch.stack(accumulated_losses).sum() / len(accumulated_losses)
+            optimiser.zero_grad()
+            total.backward()
+            torch.nn.utils.clip_grad_norm_(trainee.model.parameters(), 1.0)
+            optimiser.step()
+            history["loss"].append(float(total.detach().cpu()))
+            accumulated_losses.clear()
+            games_in_step = 0
+
+        history["reward"].append(reward)
+        if reward != 0.0:
+            history["decisive"].append(1)
+        else:
+            history["decisive"].append(0)
+
+        if (g + 1) % refresh_opponent_every == 0:
+            frozen_self.model.load_state_dict(trainee.model.state_dict())
+
+        if (g + 1) % log_every == 0:
+            last = history["reward"][-log_every:]
+            dec = sum(history["decisive"][-log_every:]) / log_every
+            print(f"  game {g+1:4d}/{total_games}  "
+                  f"mean_R={sum(last)/len(last):+.2f}  "
+                  f"decisive={dec:.2f}  "
+                  f"running_R={running_reward:+.2f}  "
+                  f"elapsed={time.perf_counter()-t0:.1f}s")
+
+    history["wall_time"].append(time.perf_counter() - t0)
+
+    # Return to inference mode.
+    trainee.model.train(False)
+
+    if checkpoint_path is not None:
+        import os as _os
+        _os.makedirs(_os.path.dirname(checkpoint_path) or ".", exist_ok=True)
+        torch.save(trainee.model.state_dict(), checkpoint_path)
+        history["checkpoint"] = checkpoint_path
+
+    return history
+
+
 def make_nca_variant(prior: str, seed: int = 0,
                       n_layers: int = 6, hidden: int = 16) -> NeuralCAAgent:
     """Produce a NeuralCAAgent with the named prior applied.

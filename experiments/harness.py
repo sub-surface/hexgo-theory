@@ -124,6 +124,33 @@ def _f_nca_combo() -> object:
     return make_nca_variant("combo", seed=0)
 
 
+def _make_trained_factory(prior: str):
+    """Build a mp-safe factory for a trained NCA variant.
+
+    Looks up checkpoints/nca_<prior>.pt relative to the project root. If the
+    checkpoint doesn't exist, falls back to the untrained prior-initialised
+    variant (so the registry doesn't raise KeyError; the user sees weaker
+    play until training runs)."""
+    def _factory() -> object:
+        import torch as _torch
+        from engine.neural_ca import make_nca_variant
+        agent = make_nca_variant(prior, seed=0)
+        ckpt = Path(os.path.dirname(os.path.dirname(__file__))) / "checkpoints" / f"nca_{prior}.pt"
+        if ckpt.exists():
+            agent.model.load_state_dict(_torch.load(ckpt, map_location=agent.device))
+            agent.model.train(False)
+            agent.name = f"nca_trained_{prior}"
+        return agent
+    return _factory
+
+
+_f_nca_trained_random           = _make_trained_factory("random")
+_f_nca_trained_d6_tied          = _make_trained_factory("d6_tied")
+_f_nca_trained_line_detector    = _make_trained_factory("line_detector")
+_f_nca_trained_erdos_selfridge  = _make_trained_factory("erdos_selfridge")
+_f_nca_trained_combo            = _make_trained_factory("combo")
+
+
 def default_registry() -> dict[str, Callable[[], object]]:
     """Top-level factories keyed by short name."""
     return {
@@ -144,6 +171,11 @@ def default_registry() -> dict[str, Callable[[], object]]:
         "nca_line_detector":     _f_nca_line_detector,
         "nca_erdos_selfridge":   _f_nca_erdos_selfridge,
         "nca_combo":             _f_nca_combo,
+        "nca_trained_random":           _f_nca_trained_random,
+        "nca_trained_d6_tied":          _f_nca_trained_d6_tied,
+        "nca_trained_line_detector":    _f_nca_trained_line_detector,
+        "nca_trained_erdos_selfridge":  _f_nca_trained_erdos_selfridge,
+        "nca_trained_combo":            _f_nca_trained_combo,
     }
 
 
