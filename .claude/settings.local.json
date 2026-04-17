@@ -1,11 +1,23 @@
 {
-  "disabledMcpjsonServers": [
-    "roblox"
-  ],
   "permissions": {
     "allow": [
       "Bash(mkdir -p C:/Users/Leon/Desktop/Psychograph/hexgo-theory/papers C:/Users/Leon/Desktop/Psychograph/hexgo-theory/notebooks)",
-      "Bash(cp \"C:/Users/Leon/Downloads/2601.03220v2.pdf\" \"C:/Users/Leon/Desktop/Psychograph/hexgo-theory/papers/finzi-2026-epiplexity.pdf\")"
+      "Bash(cp \"C:/Users/Leon/Downloads/2601.03220v2.pdf\" \"C:/Users/Leon/Desktop/Psychograph/hexgo-theory/papers/finzi-2026-epiplexity.pdf\")",
+      "Bash(python -X utf8 experiments/run_hamkins_echo.py --quick)",
+      "Bash(python -c \"from pathlib import Path; p = Path\\(r'C:\\\\Users\\\\Leon\\\\Desktop\\\\Psychograph\\\\hexgo-theory\\\\.claude\\\\worktrees\\\\cranky-jepsen-a5d631\\\\engine\\\\__init__.py'\\); print\\(p.parent.parent.parent / 'hexgo'\\)\")",
+      "Bash(python -X utf8 experiments/run_hamkins_echo.py)",
+      "Bash(tee /tmp/hamkins_full.log)",
+      "Bash(tasklist //FI \"IMAGENAME eq python.exe\")",
+      "Bash(wmic process *)",
+      "Bash(grep -v \"^$\")",
+      "Bash(powershell -Command \"Get-Process -Id 20252 | Select-Object CPU,WS,StartTime\")",
+      "Bash(powershell -Command \"Get-Process -Id 20252 -ErrorAction SilentlyContinue | Select-Object CPU\")",
+      "Bash(git mv *)",
+      "Bash(git rm *)",
+      "Bash(git add *)"
     ]
-  }
+  },
+  "disabledMcpjsonServers": [
+    "roblox"
+  ]
 }

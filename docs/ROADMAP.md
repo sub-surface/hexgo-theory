@@ -1,6 +1,6 @@
 # HexGo Theory — Roadmap v2 (Epiplexity Overhaul)
 
-> **Version:** 2.0 · supersedes `ROADMAP.md` (kept for historical reference)
+> **Version:** 2.0 · canonical roadmap (v1 retired 2026-04-17)
 > **Framing paper:** Finzi, Qiu, Jiang, Izmailov, Kolter, Wilson — *From Entropy to Epiplexity: Rethinking Information for Computationally Bounded Intelligence*, arXiv:2601.03220v2 (March 2026). Local copy: `papers/finzi-2026-epiplexity.pdf`.
 > **Horizon:** 12 months, organised into four quarterly programmes with clear verification gates.
 > **Thesis of v2:** the two parallel narratives of the original roadmap — *quasi-crystal / Pisot substitution* on one side, *ELO agent ladder* on the other — are the **same object** viewed through the lens of epiplexity. Every experiment in v2 outputs a point on a two-axis plot: `(program-length |P|, time-bounded cross-entropy H_T)`. ELO is the downstream task; Pisot structure is the saturation of `S_T`.
