@@ -92,6 +92,13 @@ def _f_mirror() -> object:
     return MirrorAgent()
 
 
+def _f_neural_ca() -> object:
+    # Imported inside the factory so the mp workers pay the torch import cost
+    # only once, not at module load of harness.py.
+    from engine.neural_ca import NeuralCAAgent
+    return NeuralCAAgent(name="neural_ca", seed=0)
+
+
 def default_registry() -> dict[str, Callable[[], object]]:
     """Top-level factories keyed by short name."""
     return {
@@ -106,6 +113,7 @@ def default_registry() -> dict[str, Callable[[], object]]:
         "ca_combo":       _f_ca_combo,
         "ca_combo_v2":    _f_ca_combo_v2,
         "mirror":         _f_mirror,
+        "neural_ca":      _f_neural_ca,
     }
 
 
