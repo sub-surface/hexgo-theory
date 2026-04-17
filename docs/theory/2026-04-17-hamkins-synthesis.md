@@ -69,3 +69,31 @@ Each claim below is intended to be tested by one experiment in `experiments/`, w
 | P5 | **supported** | `results/diffraction_p4.json` — d_min ∈ [1.0, 2.0], d_max ∈ [1.0, 4.58], corr(N, d_max) = +0.07. Delone property holds with no holes growing with game length. |
 
 The work order now is P1-fix → MirrorAgent → diffraction, which also aligns with the pending-experiment priorities listed in [CLAUDE.md](../../CLAUDE.md) §"Current research state".
+
+## 7. CA-prior warm-starts for NeuralCAAgent
+
+The current [NeuralCAAgent](../../engine/neural_ca.py) is a stack of hex-masked 3×3 conv layers with **random** weights — and even so, it beats `RandomAgent` 60–70 % of the time. That suggests structural inductive bias alone (hex-neighbour convolution + ReLU non-linearity) is doing substantive work. Training a fresh random-init network will *re-derive* all of this from scratch; hand-crafted CA weight initialisers can skip that re-derivation.
+
+Concretely: the NCA is a cellular automaton whose transition function is a conv kernel. We know hand-written CAs that encode game-relevant priors:
+
+> **(a) Line-detector prior.** A depth-1 kernel that activates on pairs of adjacent own stones along each of the three Eisenstein axes. Composition gives triples at depth 2, etc. This mechanically reconstructs `feat_chain_length` in the first few layers.
+
+> **(b) Erdős–Selfridge threat prior.** Initialise a layer so its output is a discrete approximation of the potential function $\phi(c) = \sum_L \alpha^{n_L^{\text{own}}} \mathbb{1}[n_L^{\text{opp}} = 0]$ over 6-lines $L$ through $c$. This gives the network the analytic of [feat_potential](../../engine/ca_policy.py) for free.
+
+> **(c) $D_6$-equivariant tying.** Since the game is invariant under the 12 symmetries of the hex lattice ($D_6$), weight-tie the conv filters so each filter $W$ is the average of its 12 rotational/reflective images. This cuts effective parameter count 12× and prevents training wasting capacity breaking the symmetry.
+
+> **(d) Game-of-Life sparsity prior.** Conway-style "birth on 3, survive on 2–3" CA applied to the empty-cell channel imposes a density regulariser. Not directly game-useful, but it stops the NCA collapsing to all-zeros or all-ones before it learns anything task-specific.
+
+Hard part: **there is no principled way to pick the "right" CA prior**. Priors (a) and (b) encode the existing ComboAgent features — which already exist and which the NCA is supposed to transcend, not replicate. Prior (c) is pure symmetry and should always help. Prior (d) may help or may not.
+
+**Planned experiment (post-P1–P5):**
+Train the NCA under self-play / policy-gradient / evolutionary search, with the initialiser as the independent variable:
+  1. random init (baseline — the current `NeuralCAAgent(seed=0)`),
+  2. $D_6$-equivariant random init,
+  3. line-detector prior + random top layers,
+  4. Erdős–Selfridge prior + random top layers,
+  5. full combo (2 + 3 + 4).
+
+Metric: games-to-match-Combo-v2 winrate in head-to-head. Falsifiable prediction — prior (c) $D_6$-equivariance is a >5× training speedup; priors (a) and (b) shave another ~2× by skipping re-derivation of existing heuristics; combo (5) is within noise of (c) alone. I.e. symmetry is the load-bearing structure, hand-crafted tactical priors are not.
+
+The harder open question is whether *novel* CA priors — ones that don't correspond to any existing `engine/analysis.py` function — exist and help. Candidates worth exploring: *rotor-router* / *abelian sandpile* dynamics (encode a conservation law), *totalistic* rules (treat neighbour sum rather than configuration — trades expressiveness for parameter count), and *reaction-diffusion* initialisers (build long-range wave propagation into the pre-training prior). These are guesses; finding the *right* prior for Connect-6 is research, not engineering.
