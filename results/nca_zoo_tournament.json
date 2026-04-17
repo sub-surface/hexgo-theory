@@ -1,0 +1,640 @@
+{
+  "nca_random__vs__nca_random": {
+    "black": "nca_random",
+    "white": "nca_random",
+    "n_games": 4,
+    "max_moves": 80,
+    "wall_time": 13.872745199998462,
+    "wins_black": 0,
+    "wins_white": 0,
+    "unfinished": 4,
+    "mean_length": 80.0,
+    "lengths": [
+      80,
+      80,
+      80,
+      80
+    ],
+    "ci_black": [
+      0.0,
+      0.48990002040399916
+    ],
+    "ci_white": [
+      0.0,
+      0.48990002040399916
+    ]
+  },
+  "nca_random__vs__nca_d6_tied": {
+    "black": "nca_random",
+    "white": "nca_d6_tied",
+    "n_games": 4,
+    "max_moves": 80,
+    "wall_time": 1.425021299997752,
+    "wins_black": 4,
+    "wins_white": 0,
+    "unfinished": 0,
+    "mean_length": 33.0,
+    "lengths": [
+      33,
+      33,
+      33,
+      33
+    ],
+    "ci_black": [
+      0.5100999795960008,
+      1.0
+    ],
+    "ci_white": [
+      0.0,
+      0.48990002040399916
+    ]
+  },
+  "nca_random__vs__nca_line_detector": {
+    "black": "nca_random",
+    "white": "nca_line_detector",
+    "n_games": 4,
+    "max_moves": 80,
+    "wall_time": 4.657109199997649,
+    "wins_black": 0,
+    "wins_white": 0,
+    "unfinished": 4,
+    "mean_length": 80.0,
+    "lengths": [
+      80,
+      80,
+      80,
+      80
+    ],
+    "ci_black": [
+      0.0,
+      0.48990002040399916
+    ],
+    "ci_white": [
+      0.0,
+      0.48990002040399916
+    ]
+  },
+  "nca_random__vs__nca_erdos_selfridge": {
+    "black": "nca_random",
+    "white": "nca_erdos_selfridge",
+    "n_games": 4,
+    "max_moves": 80,
+    "wall_time": 2.075382400002127,
+    "wins_black": 0,
+    "wins_white": 4,
+    "unfinished": 0,
+    "mean_length": 47.0,
+    "lengths": [
+      47,
+      47,
+      47,
+      47
+    ],
+    "ci_black": [
+      0.0,
+      0.48990002040399916
+    ],
+    "ci_white": [
+      0.5100999795960008,
+      1.0
+    ]
+  },
+  "nca_random__vs__nca_combo": {
+    "black": "nca_random",
+    "white": "nca_combo",
+    "n_games": 4,
+    "max_moves": 80,
+    "wall_time": 10.013533199999074,
+    "wins_black": 0,
+    "wins_white": 0,
+    "unfinished": 4,
+    "mean_length": 80.0,
+    "lengths": [
+      80,
+      80,
+      80,
+      80
+    ],
+    "ci_black": [
+      0.0,
+      0.48990002040399916
+    ],
+    "ci_white": [
+      0.0,
+      0.48990002040399916
+    ]
+  },
+  "nca_d6_tied__vs__nca_random": {
+    "black": "nca_d6_tied",
+    "white": "nca_random",
+    "n_games": 4,
+    "max_moves": 80,
+    "wall_time": 1.5457525000019814,
+    "wins_black": 0,
+    "wins_white": 4,
+    "unfinished": 0,
+    "mean_length": 18.0,
+    "lengths": [
+      18,
+      18,
+      18,
+      18
+    ],
+    "ci_black": [
+      0.0,
+      0.48990002040399916
+    ],
+    "ci_white": [
+      0.5100999795960008,
+      1.0
+    ]
+  },
+  "nca_d6_tied__vs__nca_d6_tied": {
+    "black": "nca_d6_tied",
+    "white": "nca_d6_tied",
+    "n_games": 4,
+    "max_moves": 80,
+    "wall_time": 12.596189500000037,
+    "wins_black": 0,
+    "wins_white": 0,
+    "unfinished": 4,
+    "mean_length": 80.0,
+    "lengths": [
+      80,
+      80,
+      80,
+      80
+    ],
+    "ci_black": [
+      0.0,
+      0.48990002040399916
+    ],
+    "ci_white": [
+      0.0,
+      0.48990002040399916
+    ]
+  },
+  "nca_d6_tied__vs__nca_line_detector": {
+    "black": "nca_d6_tied",
+    "white": "nca_line_detector",
+    "n_games": 4,
+    "max_moves": 80,
+    "wall_time": 6.605897099998401,
+    "wins_black": 4,
+    "wins_white": 0,
+    "unfinished": 0,
+    "mean_length": 53.0,
+    "lengths": [
+      53,
+      53,
+      53,
+      53
+    ],
+    "ci_black": [
+      0.5100999795960008,
+      1.0
+    ],
+    "ci_white": [
+      0.0,
+      0.48990002040399916
+    ]
+  },
+  "nca_d6_tied__vs__nca_erdos_selfridge": {
+    "black": "nca_d6_tied",
+    "white": "nca_erdos_selfridge",
+    "n_games": 4,
+    "max_moves": 80,
+    "wall_time": 4.049989400002232,
+    "wins_black": 4,
+    "wins_white": 0,
+    "unfinished": 0,
+    "mean_length": 36.0,
+    "lengths": [
+      36,
+      36,
+      36,
+      36
+    ],
+    "ci_black": [
+      0.5100999795960008,
+      1.0
+    ],
+    "ci_white": [
+      0.0,
+      0.48990002040399916
+    ]
+  },
+  "nca_d6_tied__vs__nca_combo": {
+    "black": "nca_d6_tied",
+    "white": "nca_combo",
+    "n_games": 4,
+    "max_moves": 80,
+    "wall_time": 5.533855699999549,
+    "wins_black": 4,
+    "wins_white": 0,
+    "unfinished": 0,
+    "mean_length": 49.0,
+    "lengths": [
+      49,
+      49,
+      49,
+      49
+    ],
+    "ci_black": [
+      0.5100999795960008,
+      1.0
+    ],
+    "ci_white": [
+      0.0,
+      0.48990002040399916
+    ]
+  },
+  "nca_line_detector__vs__nca_random": {
+    "black": "nca_line_detector",
+    "white": "nca_random",
+    "n_games": 4,
+    "max_moves": 80,
+    "wall_time": 8.915113200000633,
+    "wins_black": 0,
+    "wins_white": 4,
+    "unfinished": 0,
+    "mean_length": 62.0,
+    "lengths": [
+      62,
+      62,
+      62,
+      62
+    ],
+    "ci_black": [
+      0.0,
+      0.48990002040399916
+    ],
+    "ci_white": [
+      0.5100999795960008,
+      1.0
+    ]
+  },
+  "nca_line_detector__vs__nca_d6_tied": {
+    "black": "nca_line_detector",
+    "white": "nca_d6_tied",
+    "n_games": 4,
+    "max_moves": 80,
+    "wall_time": 12.337414899997384,
+    "wins_black": 0,
+    "wins_white": 0,
+    "unfinished": 4,
+    "mean_length": 80.0,
+    "lengths": [
+      80,
+      80,
+      80,
+      80
+    ],
+    "ci_black": [
+      0.0,
+      0.48990002040399916
+    ],
+    "ci_white": [
+      0.0,
+      0.48990002040399916
+    ]
+  },
+  "nca_line_detector__vs__nca_line_detector": {
+    "black": "nca_line_detector",
+    "white": "nca_line_detector",
+    "n_games": 4,
+    "max_moves": 80,
+    "wall_time": 13.582715600001393,
+    "wins_black": 0,
+    "wins_white": 0,
+    "unfinished": 4,
+    "mean_length": 80.0,
+    "lengths": [
+      80,
+      80,
+      80,
+      80
+    ],
+    "ci_black": [
+      0.0,
+      0.48990002040399916
+    ],
+    "ci_white": [
+      0.0,
+      0.48990002040399916
+    ]
+  },
+  "nca_line_detector__vs__nca_erdos_selfridge": {
+    "black": "nca_line_detector",
+    "white": "nca_erdos_selfridge",
+    "n_games": 4,
+    "max_moves": 80,
+    "wall_time": 5.017886699999508,
+    "wins_black": 0,
+    "wins_white": 4,
+    "unfinished": 0,
+    "mean_length": 47.0,
+    "lengths": [
+      47,
+      47,
+      47,
+      47
+    ],
+    "ci_black": [
+      0.0,
+      0.48990002040399916
+    ],
+    "ci_white": [
+      0.5100999795960008,
+      1.0
+    ]
+  },
+  "nca_line_detector__vs__nca_combo": {
+    "black": "nca_line_detector",
+    "white": "nca_combo",
+    "n_games": 4,
+    "max_moves": 80,
+    "wall_time": 12.994558200000029,
+    "wins_black": 0,
+    "wins_white": 0,
+    "unfinished": 4,
+    "mean_length": 80.0,
+    "lengths": [
+      80,
+      80,
+      80,
+      80
+    ],
+    "ci_black": [
+      0.0,
+      0.48990002040399916
+    ],
+    "ci_white": [
+      0.0,
+      0.48990002040399916
+    ]
+  },
+  "nca_erdos_selfridge__vs__nca_random": {
+    "black": "nca_erdos_selfridge",
+    "white": "nca_random",
+    "n_games": 4,
+    "max_moves": 80,
+    "wall_time": 3.0762820999989344,
+    "wins_black": 0,
+    "wins_white": 4,
+    "unfinished": 0,
+    "mean_length": 34.0,
+    "lengths": [
+      34,
+      34,
+      34,
+      34
+    ],
+    "ci_black": [
+      0.0,
+      0.48990002040399916
+    ],
+    "ci_white": [
+      0.5100999795960008,
+      1.0
+    ]
+  },
+  "nca_erdos_selfridge__vs__nca_d6_tied": {
+    "black": "nca_erdos_selfridge",
+    "white": "nca_d6_tied",
+    "n_games": 4,
+    "max_moves": 80,
+    "wall_time": 13.37340729999778,
+    "wins_black": 0,
+    "wins_white": 0,
+    "unfinished": 4,
+    "mean_length": 80.0,
+    "lengths": [
+      80,
+      80,
+      80,
+      80
+    ],
+    "ci_black": [
+      0.0,
+      0.48990002040399916
+    ],
+    "ci_white": [
+      0.0,
+      0.48990002040399916
+    ]
+  },
+  "nca_erdos_selfridge__vs__nca_line_detector": {
+    "black": "nca_erdos_selfridge",
+    "white": "nca_line_detector",
+    "n_games": 4,
+    "max_moves": 80,
+    "wall_time": 15.444144799999776,
+    "wins_black": 0,
+    "wins_white": 0,
+    "unfinished": 4,
+    "mean_length": 80.0,
+    "lengths": [
+      80,
+      80,
+      80,
+      80
+    ],
+    "ci_black": [
+      0.0,
+      0.48990002040399916
+    ],
+    "ci_white": [
+      0.0,
+      0.48990002040399916
+    ]
+  },
+  "nca_erdos_selfridge__vs__nca_erdos_selfridge": {
+    "black": "nca_erdos_selfridge",
+    "white": "nca_erdos_selfridge",
+    "n_games": 4,
+    "max_moves": 80,
+    "wall_time": 3.261940600001253,
+    "wins_black": 4,
+    "wins_white": 0,
+    "unfinished": 0,
+    "mean_length": 33.0,
+    "lengths": [
+      33,
+      33,
+      33,
+      33
+    ],
+    "ci_black": [
+      0.5100999795960008,
+      1.0
+    ],
+    "ci_white": [
+      0.0,
+      0.48990002040399916
+    ]
+  },
+  "nca_erdos_selfridge__vs__nca_combo": {
+    "black": "nca_erdos_selfridge",
+    "white": "nca_combo",
+    "n_games": 4,
+    "max_moves": 80,
+    "wall_time": 5.58305620000101,
+    "wins_black": 4,
+    "wins_white": 0,
+    "unfinished": 0,
+    "mean_length": 48.0,
+    "lengths": [
+      48,
+      48,
+      48,
+      48
+    ],
+    "ci_black": [
+      0.5100999795960008,
+      1.0
+    ],
+    "ci_white": [
+      0.0,
+      0.48990002040399916
+    ]
+  },
+  "nca_combo__vs__nca_random": {
+    "black": "nca_combo",
+    "white": "nca_random",
+    "n_games": 4,
+    "max_moves": 80,
+    "wall_time": 3.014927100000932,
+    "wins_black": 0,
+    "wins_white": 4,
+    "unfinished": 0,
+    "mean_length": 38.0,
+    "lengths": [
+      38,
+      38,
+      38,
+      38
+    ],
+    "ci_black": [
+      0.0,
+      0.48990002040399916
+    ],
+    "ci_white": [
+      0.5100999795960008,
+      1.0
+    ]
+  },
+  "nca_combo__vs__nca_d6_tied": {
+    "black": "nca_combo",
+    "white": "nca_d6_tied",
+    "n_games": 4,
+    "max_moves": 80,
+    "wall_time": 13.618969600000128,
+    "wins_black": 0,
+    "wins_white": 0,
+    "unfinished": 4,
+    "mean_length": 80.0,
+    "lengths": [
+      80,
+      80,
+      80,
+      80
+    ],
+    "ci_black": [
+      0.0,
+      0.48990002040399916
+    ],
+    "ci_white": [
+      0.0,
+      0.48990002040399916
+    ]
+  },
+  "nca_combo__vs__nca_line_detector": {
+    "black": "nca_combo",
+    "white": "nca_line_detector",
+    "n_games": 4,
+    "max_moves": 80,
+    "wall_time": 13.254767099999299,
+    "wins_black": 0,
+    "wins_white": 0,
+    "unfinished": 4,
+    "mean_length": 80.0,
+    "lengths": [
+      80,
+      80,
+      80,
+      80
+    ],
+    "ci_black": [
+      0.0,
+      0.48990002040399916
+    ],
+    "ci_white": [
+      0.0,
+      0.48990002040399916
+    ]
+  },
+  "nca_combo__vs__nca_erdos_selfridge": {
+    "black": "nca_combo",
+    "white": "nca_erdos_selfridge",
+    "n_games": 4,
+    "max_moves": 80,
+    "wall_time": 7.24783710000338,
+    "wins_black": 0,
+    "wins_white": 4,
+    "unfinished": 0,
+    "mean_length": 54.0,
+    "lengths": [
+      54,
+      54,
+      54,
+      54
+    ],
+    "ci_black": [
+      0.0,
+      0.48990002040399916
+    ],
+    "ci_white": [
+      0.5100999795960008,
+      1.0
+    ]
+  },
+  "nca_combo__vs__nca_combo": {
+    "black": "nca_combo",
+    "white": "nca_combo",
+    "n_games": 4,
+    "max_moves": 80,
+    "wall_time": 12.424185600000783,
+    "wins_black": 0,
+    "wins_white": 0,
+    "unfinished": 4,
+    "mean_length": 80.0,
+    "lengths": [
+      80,
+      80,
+      80,
+      80
+    ],
+    "ci_black": [
+      0.0,
+      0.48990002040399916
+    ],
+    "ci_white": [
+      0.0,
+      0.48990002040399916
+    ]
+  },
+  "_wall_time": 205.52738850000242,
+  "_params": {
+    "n_games": 4,
+    "max_moves": 80,
+    "seed": 20260418,
+    "agents": [
+      "nca_random",
+      "nca_d6_tied",
+      "nca_line_detector",
+      "nca_erdos_selfridge",
+      "nca_combo"
+    ]
+  }
+}

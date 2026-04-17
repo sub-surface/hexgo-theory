@@ -18,7 +18,9 @@ u₃ = (1, -1)   diagonal axis
 
 A win is exactly a length-6 arithmetic progression in Z[ω] with unit step — a purely number-theoretic object.
 
-The strategy-stealing argument proves the game cannot be a second-player win. It is almost certainly a first-player win on an infinite board.
+The strategy-stealing argument proves the game cannot be a second-player win. It is almost certainly a first-player win on an infinite board — empirically, strong-agent self-play gives Black share of decisive games $\ge 0.5$ within Wilson 95% CI (see `results/fma_curve.json`, `results/combo_defect.json`).
+
+Descriptive-set-theoretically, HexGo's payoff ("some player has 6 in a row") is $\Sigma^0_1$ (open), directly determined by Gale–Stewart — two levels below infinite Hex at $\Sigma^0_7$ (Hamkins–Leonessi 2022, Törnä). This is why *finite-horizon* analysis — not Hamkins-style infinitary machinery — is the right tool here.
 
 ---
 
@@ -62,13 +64,27 @@ Use the `EisensteinGreedyAgent` from the main HexGo engine as a substrate:
 
 ### Phase 3 — Empirical Validation
 
-Use self-play data from the trained HexNet (AlphaZero-style, ~1.9M params) to test the conjectures:
+Use self-play data from the strongest available agent to test the conjectures:
 
-- **Pair correlation function** g(r): compute the two-point correlation of occupied cells. Quasi-periodic oscillations (peaks at irrational multiples of lattice spacing) → quasi-crystalline evidence.
+- **Diffraction spectrum**: compute the Fourier transform of the point measure on occupied cells. Pure point spectrum → quasi-crystal. Absolutely continuous → random noise. Mixed → intermediate regime. *(Supported as of 2026-04-17 — Bragg99 = 0.51 ± 0.13 in long Combo-v2 self-play vs 0.055 for random placement. See `results/diffraction_p4.json`.)*
 
-- **Diffraction spectrum**: compute the Fourier transform of the point measure on occupied cells. Pure point spectrum → quasi-crystal. Absolutely continuous → random noise. Mixed → intermediate regime.
+- **Pair correlation function** $g(r)$: two-point correlation of occupied cells. Quasi-periodic oscillations (peaks at irrational multiples of lattice spacing) are quasi-crystalline evidence. *(Delone property already validated: `d_min` bounded, `d_max` uncorrelated with stone count.)*
 
-- **Pattern frequency analysis**: extract all local patterns of radius 2 and 3 from self-play games. If the number of distinct types (up to D6) is bounded and their frequencies converge, this is strong evidence for a substitution tiling.
+- **Pattern frequency analysis**: extract all local patterns of radius 2 and 3 from self-play games. If the number of distinct types (up to $D_6$) is bounded and their frequencies converge, this is strong evidence for a substitution tiling.
+
+### Phase 4 — Neural CA Zoo (2026-04-17 pivot)
+
+The hand-crafted agent ladder has plateaued (see `results/fma_curve.json`). To extend the frontier and sharpen the Phase 3 quasicrystal measurement, train a zoo of `NeuralCAAgent` variants ([engine/neural_ca.py](engine/neural_ca.py)) with different cellular-automaton inductive priors, then round-robin-tournament them to select a champion:
+
+- **random init** — control baseline.
+- **$D_6$-equivariant** — weight-tie conv filters over the 12-element hex-lattice symmetry group.
+- **line-detector prior** — depth-1 kernels initialised to respond to adjacent own-stone pairs along each Eisenstein axis.
+- **Erdős–Selfridge prior** — initialiser encoding the discretised $\phi(c) = \sum_L \alpha^{n_L^\text{own}} \mathbb{1}[n_L^\text{opp}=0]$ potential.
+- **combo** — all three priors stacked.
+
+Training: self-play policy gradient on RTX 2060 (torch + CUDA). Tournament: [experiments/harness.py](experiments/harness.py)'s `run_round_robin`. The round-robin matrix is *itself* an ablation study of which inductive biases matter for this game — and it selects the strongest agent we have for the Phase 3 diffraction measurement and the Pisot $S_T$ scan (Programme D in the roadmap).
+
+See [docs/theory/2026-04-17-hamkins-synthesis.md](docs/theory/2026-04-17-hamkins-synthesis.md) §7 for the CA-prior discussion.
 
 ---
 
@@ -76,10 +92,12 @@ Use self-play data from the trained HexNet (AlphaZero-style, ~1.9M params) to te
 
 | Framework | Application |
 |-----------|-------------|
-| `EisensteinGreedyAgent` | Fast hand-crafted player; generates tractable game trees for combinatorial analysis |
-| Erdős-Selfridge potential | Threat quantification; spatial potential landscape |
+| Hand-crafted agents (`EisensteinGreedyAgent`, `ComboAgent`) | Populate left side of the $(\|P\|, H_T)$ Pareto frontier with small-$\|P\|$ reference points |
+| `NeuralCAAgent` zoo (torch + CUDA) | Populate right side of the Pareto frontier; produce the strongest available agent for Phase 3 |
+| Erdős-Selfridge potential | Threat quantification; spatial potential landscape; doubles as CA-prior initialiser |
+| Epiplexity (Finzi et al. 2026) | MDL measurement framework; $S_T$ scaling as a Pisot spectroscope |
 | Combinatorial Game Theory (Berlekamp-Conway-Guy) | Nim-value decomposition for late-game disconnected threat regions |
-| Discrete harmonic analysis on Z[ω] | Green's function, harmonic measure, gradient flows |
+| Descriptive set theory (Hamkins-Leonessi) | Position HexGo at $\Sigma^0_1$ vs infinite Hex at $\Sigma^0_7$; MirrorAgent pairing strategy |
 | Substitution tiling theory (Thurston-Kenyon) | Pisot substitution → aperiodicity proof strategy |
 | A₂ hyperplane arrangement / Coxeter theory | Algebraic structure of the forcing graph |
 | Diffraction theory (Baake-Grimm) | Spectral characterisation of quasi-crystalline order |
@@ -107,24 +125,37 @@ The theoretical work here is designed to feed back into the engine:
 
 ---
 
-## Repository Structure (Planned)
+## Repository Structure
 
 ```
 hexgo-theory/
-├── README.md                  — this file
-├── analysis/
-│   ├── eisenstein_selfplay.py — run Eisenstein vs. Eisenstein, collect trajectories
-│   ├── potential_map.py       — Erdős-Selfridge spatial potential landscape
-│   ├── forcing_graph.py       — enumerate forced moves, build substitution candidate
-│   └── diffraction.py        — FFT-based spectral analysis of occupied cell sets
-├── algebra/
-│   ├── sublattice.py          — Z[ω] sublattice decomposition and coset analysis
-│   ├── hyperplane.py          — A₂ arrangement, Coxeter word encoding of game paths
-│   └── substitution.py        — substitution matrix construction and Pisot test
-├── notebooks/
-│   └── 01_eisenstein_games.ipynb  — exploratory analysis of greedy self-play
-└── docs/
-    └── conjectures.md         — formal statement of conjectures with proof sketches
+├── README.md                      — this file
+├── CLAUDE.md                      — agent onboarding / current research state
+├── docs/
+│   ├── ROADMAP.md                 — canonical 12-month plan (epiplexity framing)
+│   └── theory/                    — living synthesis notes
+│       └── 2026-04-17-hamkins-synthesis.md
+├── engine/
+│   ├── __init__.py                — re-exports from ../hexgo
+│   ├── agents.py                  — ForkAware, PotentialGradient, Combo, Mirror
+│   ├── ca_policy.py               — CAAgent framework; make_combo_v2_ca etc.
+│   ├── neural_ca.py               — NeuralCAAgent (torch + CUDA hex-conv stack)
+│   ├── diffraction.py             — GPU diffraction / Bragg-peak analyser
+│   └── analysis.py                — live_lines, potential, fork helpers
+├── experiments/
+│   ├── harness.py                 — parallel match harness (mp.Pool, Wilson CIs)
+│   ├── run_epiplexity_scan.py     — (|P|, H_T) measurements across agents
+│   ├── run_hamkins_echo.py        — does draw fraction rise with horizon?
+│   ├── run_combo_defect.py        — Combo-going-Black fix validation (P1)
+│   ├── run_mirror_agent.py        — MirrorAgent pairing-strategy validation (P2)
+│   ├── run_diffraction.py         — long-self-play Bragg peaks (P4, P5)
+│   ├── run_fma_curve.py           — first-mover-advantage vs strength
+│   └── run_neural_ca.py           — untrained NCA baseline
+├── results/                       — JSON outputs per experiment (tracked in git)
+├── figures/                       — PNG outputs per experiment (tracked in git)
+└── papers/                        — supporting PDFs
+    ├── 2201.06475v3-Infinite-Hex-is-a-draw.pdf
+    └── finzi-2026-epiplexity.pdf
 ```
 
 ---

@@ -168,9 +168,23 @@ For each agent `A`:
 - Overlay the observer-net as a single point (large `|P|`, small `H_T`) — it competes on predictive power but loses on parsimony.
 
 ### E.3 New agents motivated by gaps on the frontier
-- `SubstitutionAgent` (v1 Phase 3 goal, now tied to D.2 output): plays to the substitution tile templates discovered by the epiplexity scan.
-- `CoxeterAgent` (v1 Phase 5): if A₂-arrangement encoding of games is geodesic, implement a geodesic-preferring agent. Likely high `|P|`, moderate `H_T` — an interesting frontier point.
-- `MDLEGreedy` (novel): at each move, pick the move that *minimises* the post-move MDL of the resulting position under a small observer. A learner that optimises for low-epiplexity futures is a candidate for robust play.
+
+**Primary (2026-04-17 pivot):** five neural-CA variants with different inductive priors, trained under self-play, competing in a round-robin to *select* the strongest agent on the right-hand side of the frontier. See synthesis note [docs/theory/2026-04-17-hamkins-synthesis.md](../docs/theory/2026-04-17-hamkins-synthesis.md) §7 for the prior taxonomy. The substrate is the existing `NeuralCAAgent` ([engine/neural_ca.py](../engine/neural_ca.py)) — a hex-conv stack on torch+CUDA.
+
+Variants:
+  1. `nca_random_init` — control. Already a point on the frontier ([experiments/run_neural_ca.py](../experiments/run_neural_ca.py)).
+  2. `nca_d6_tied` — weight-tie conv filters over the 12-element $D_6$ group. 12× smaller effective parameter count.
+  3. `nca_line_detector` — depth-1 kernels initialised to respond to adjacent own-stone pairs along each Eisenstein axis.
+  4. `nca_erdos_selfridge` — initialiser encoding the discretised $\phi(c) = \sum_L \alpha^{n_L^\text{own}} \mathbb{1}[n_L^\text{opp}=0]$ potential.
+  5. `nca_combo` — priors (2) + (3) + (4) stacked.
+
+Tournament (run via [experiments/harness.py](../experiments/harness.py)'s `run_round_robin`) gives both a round-robin win-rate matrix (the **CA-prior ablation study** — publishable on its own) and a single champion. The champion replaces `ca_combo_v2` at the top of the ladder for downstream Programme D measurements.
+
+**Stretch (optional, was Primary in v2.0):** `SubstitutionAgent` (tied to D.2 tile templates), `CoxeterAgent` (A₂-geodesic player), `MDLEGreedy` (minimises post-move MDL under a small observer). These are worth adding as frontier points if time permits but are not on the critical path to the paper.
+
+### E.4 Why replace hand-crafted agents with a neural zoo
+
+The hand-crafted ladder (`random → greedy → fork_aware → combo → ca_combo_v2`) empirically plateaus: the 2026-04-17 FMA curve ([results/fma_curve.json](../results/fma_curve.json)) shows ca_combo_v2 at $p_B = 0.44$ [0.31, 0.58] — not meaningfully stronger than combo. Adding more hand-engineered features is a diminishing-returns direction. Training under self-play with architectural priors is the natural way to extend the frontier *rightward* (toward higher $|P|$, lower $H_T$) without hand-crafting every feature. Crucially, the zoo is also an **ablation experiment** — it falsifies or confirms the §7 prediction that $D_6$-equivariance is the load-bearing prior and tactical priors are not.
 
 ### E.4 ELO ↔ MDL correlation
 - Compute Pearson `r` between ELO rating and negative `MDL_T`.
@@ -216,6 +230,7 @@ For each agent `A`:
 | C (Paradox 3) | Linear probes fail on all four structural predicates | Try richer probes (MLP, not linear); if still null, the observer is not extracting the predicates we thought — valuable to know |
 | D (Synthesis) | `S_T` grows linearly with `N` in all regimes | **This falsifies the Pisot conjecture empirically.** Report as major negative result; pivot to characterising the non-substitution structure |
 | E (Ladder) | No correlation between MDL and ELO | Strategic quality is not captured by next-move prediction — interesting finding; reframe as evidence for look-ahead mattering beyond single-move policy |
+| E.3 (NCA zoo) | Random-init NCA ties or beats all prior-initialised variants in tournament | Inductive bias adds nothing in this domain. Reports as a negative result on the §7 "symmetry is load-bearing" claim. Still provides a strongest-available agent for Programme D; the paper section becomes "tried CA priors, none beat random init — use random init going forward." |
 
 ---
 
@@ -235,11 +250,12 @@ Quarters are calibrated to "one FTE-equivalent of focused hobby time." Adjust ru
 - Weeks 22–24: **B-gate verification**; Programme E Pareto plot computed, `r(MDL, ELO)` reported
 - Weeks 25–26: integration — start using MDL as agent-selection heuristic in `elo_ladder.py`
 
-### Q3 (months 7–9) — Programme C + substitution agent
+### Q3 (months 7–9) — Programme C + NCA zoo training & tournament
 - Weeks 27–30: `engine/probes.py`, linear-probe harness
-- Weeks 31–34: **C-gate verification**; emergent-structure analysis
-- Weeks 35–38: `SubstitutionAgent` first implementation using tile templates reverse-engineered from probe-active neurons
-- Week 39: ladder refresh with new agent
+- Weeks 31–33: **C-gate verification**; emergent-structure analysis
+- Weeks 34–37: NCA zoo training (E.3 primary path) — five prior variants, each trained via self-play policy gradient on RTX 2060 until either (a) tournament-ready or (b) compute budget ($\le 24$ h / variant) exhausted. Infrastructure reuses `NeuralCAAgent` ([engine/neural_ca.py](../engine/neural_ca.py)).
+- Week 38: zoo round-robin via `run_round_robin` + win-rate matrix figure. Champion replaces `ca_combo_v2` as downstream "strongest agent."
+- Week 39: ladder refresh. Stretch `SubstitutionAgent` / `CoxeterAgent` only if tournament finished early.
 
 ### Q4 (months 10–12) — Programme D + synthesis
 - Weeks 40–44: minimum-observer-size scan across 7 corpus sizes
@@ -281,6 +297,45 @@ Created as part of this overhaul. Sections mirror programmes A–E. It imports t
 - Koppel 1988 — *Structure* (sophistication — the limiting case of epiplexity)
 - Hutter 2005 — *Universal AI* (Solomonoff induction, context for `H_T` at unbounded `T`)
 - Olsson et al. 2022 — *In-context Learning and Induction Heads* (why "circuits learned from structure transfer" — cited in Finzi et al.)
+
+---
+
+## 13. What "done" looks like — paper triptych
+
+Added 2026-04-17 to make the completion criterion concrete. The final write-up is built around three load-bearing figures; everything else is supporting content.
+
+### Figure 1 — MDL Pareto frontier in $(|P|, H_T)$ space
+- Programme E.2. Scatter all agents in $(|P|, H_T)$ space with the lower-left convex hull drawn.
+- Hand-crafted agents (random, greedy, fork_aware, combo, ca_combo_v2) populate the left side (small $|P|$).
+- The NCA zoo champion (E.3) occupies the far right.
+- Observer-net is a reference point off the frontier (huge $|P|$, lowest $H_T$).
+- **Reader take-away:** structure and parsimony trade off. The frontier has distinct regimes.
+
+### Figure 2 — Diffraction spectrum of long self-play
+- Programmes P4/P5 extended: rerun on the NCA zoo champion at $N \ge 500$ stones per game, $\ge 30$ games. Compute diffraction via [engine/diffraction.py](../engine/diffraction.py).
+- Pure-point component fraction (Bragg99) vs control (random placement).
+- **Reader take-away:** perfect-or-near-perfect HexGo play produces a Meyer set with aperiodic order.
+
+### Figure 3 — $S_T(N)$ vs $\log N$ with $\lambda$ fit
+- Programme D-gate. On the NCA zoo champion's self-play corpus, for corpus sizes $N \in \{10^2, 10^{2.5}, \dots, 10^5\}$, compute the minimum observer-net size achieving loss within $\epsilon$ of irreducible $H_T$. Plot $S_T(N)$ vs $\log N$.
+- Fit $S_T \sim \alpha \log N + \beta$; report $\lambda_\text{epiplexity} = \exp(1/\alpha)$.
+- Overlay: independent $\lambda_\text{diffraction}$ from Figure 2's peak spacings.
+- **Reader take-away:** two independent routes to the same Pisot inflation constant. This is the headline methodological contribution.
+
+### Supporting content (sections, not figures)
+- P1 strategy-stealing validation (combo_defect table) — one paragraph.
+- P2 MirrorAgent result — one paragraph, cites Hamkins–Leonessi.
+- FMA curve + decisiveness monotonicity — shows weak agents don't reach terminal positions, which is why we need strong agents for Pisot measurement. One paragraph.
+- Hamkins echo (decisive not drawish) — one paragraph positioning us in the $\Sigma^0_1$ regime vs infinite Hex at $\Sigma^0_7$.
+
+### Completion criterion
+The paper ships when:
+1. NCA zoo tournament has a clear champion (not necessarily a statistical dominant, but a unique $\operatorname{argmax}$ on the round-robin).
+2. Figure 2 is reproducible from a single [experiments/run_*.py](../experiments/) and the champion's checkpoint.
+3. Figure 3 shows either (a) $\lambda_\text{epiplexity}, \lambda_\text{diffraction}$ both inside a Pisot-family interval (golden/plastic/tribonacci), or (b) a clearly-reported null result with the Pisot conjecture explicitly falsified.
+4. All P1–P5 propositions in the synthesis note have a paragraph of justification in the paper's supporting text.
+
+Anything else is optional polish.
 
 ---
 

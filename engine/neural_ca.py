@@ -171,3 +171,153 @@ class NeuralCAAgent:
             import random as _r
             return _r.choice(list(legal))
         return best
+
+
+# ── CA-prior initialisers (synthesis §7) ─────────────────────────────────────
+#
+# Factory entrypoint `make_nca_variant(prior, seed)` returns a NeuralCAAgent
+# whose first convolutional layer is overwritten with a hand-crafted kernel
+# corresponding to one of five priors. Higher layers remain randomly
+# initialised. Downstream training (self-play policy gradient, evolutionary
+# search) is expected to refine these kernels; the priors are warm-starts,
+# not constraints.
+#
+# Priors:
+#   "random"          — no init beyond the default normal(0, 0.2)
+#   "d6_tied"         — weight-tie within the 12-element D_6 hex symmetry group
+#   "line_detector"   — first layer responds to adjacent own-stone pairs along
+#                       each of the three Eisenstein axes
+#   "erdos_selfridge" — first layer computes an approximation of
+#                       phi(c) = sum_L alpha^{n_L^own} 1[n_L^opp == 0]
+#                       over the 6-lines through c
+#   "combo"           — d6_tied + line_detector + erdos_selfridge stacked
+
+def _d6_tie_first_conv(model: NeuralCA) -> None:
+    """Average the first HexConv2d's weight over the 6 rotational images of
+    the 3x3 hex kernel, and over its horizontal reflection. Imposes D_6 / D_3
+    approximate invariance on layer 0 only — cheap surrogate for true
+    per-layer equivariance (real equivariance needs Steerable CNNs)."""
+    with torch.no_grad():
+        hex_conv = model.net[0]
+        if not isinstance(hex_conv, HexConv2d):
+            return
+        w = hex_conv.conv.weight  # (out, in, 3, 3)
+        # 6 rotations on the axial 3x3 kernel: enumerate by 60° rotation of
+        # the 6 hex-neighbour positions. For the masked 3x3, the 6 active
+        # positions form a hexagonal ring; rotating them permutes 6 values.
+        ring_coords = [(0, 0), (0, 1), (1, 2), (2, 2), (2, 1), (1, 0)]  # ccw
+        centre = (1, 1)
+        averaged = w.clone()
+        for k in range(1, 6):
+            rot = w.clone()
+            for i, (r0, c0) in enumerate(ring_coords):
+                r1, c1 = ring_coords[(i + k) % 6]
+                rot[:, :, r1, c1] = w[:, :, r0, c0]
+            rot[:, :, centre[0], centre[1]] = w[:, :, centre[0], centre[1]]
+            averaged = averaged + rot
+        averaged = averaged / 6.0
+        # Horizontal reflection (swap two opposite neighbour pairs).
+        refl = averaged.clone()
+        for (r0, c0), (r1, c1) in [((0, 0), (2, 2)), ((0, 1), (2, 1)),
+                                   ((1, 0), (1, 2))]:
+            refl[:, :, r0, c0] = averaged[:, :, r1, c1]
+            refl[:, :, r1, c1] = averaged[:, :, r0, c0]
+        hex_conv.conv.weight.copy_((averaged + refl) / 2.0)
+
+
+def _line_detector_first_conv(model: NeuralCA) -> None:
+    """Overwrite first layer's own-channel weights so each of the first three
+    output channels activates on an own-stone pair along one Eisenstein axis.
+    Remaining channels stay random. Three filters are enough for the three
+    hex axes; the depth-2 composition gives triples."""
+    with torch.no_grad():
+        hex_conv = model.net[0]
+        if not isinstance(hex_conv, HexConv2d):
+            return
+        w = hex_conv.conv.weight  # (out, in=3, 3, 3)
+        out_ch = w.shape[0]
+        # Axial 3x3 kernel coordinates for the six neighbours (row, col):
+        # axis 0 (q, horizontal):   (1, 0) and (1, 2)
+        # axis 1 (r, anti-diag):    (0, 1) and (2, 1)
+        # axis 2 (q+r, main diag):  (0, 0) and (2, 2)  — but these are masked!
+        # The two masked corners are (0, 2) and (2, 0). Our diagonal axis is
+        # (+1,-1) / (-1,+1), i.e. coordinates (0, 2) and (2, 0) — also masked.
+        # So the hex-mask hex kernel encodes two axis-aligned pairs natively
+        # and one diagonal pair as (0, 0) and (2, 2).
+        axis_pairs = [
+            [(1, 0), (1, 2)],    # axis 0
+            [(0, 1), (2, 1)],    # axis 1
+            [(0, 0), (2, 2)],    # axis 2 (diagonal, corners of hex mask)
+        ]
+        # Zero out the first three output channels, then put +1 on the own
+        # channel (index 1) at both ends of the pair for that axis.
+        for ch, pairs in enumerate(axis_pairs):
+            if ch >= out_ch:
+                break
+            w[ch].zero_()
+            for (r, c) in pairs:
+                w[ch, 1, r, c] = 1.0  # channel 1 = own-stone
+            # Bias toward zero so an empty neighbourhood gives 0 activation.
+            if hex_conv.conv.bias is not None:
+                hex_conv.conv.bias[ch] = -1.5
+
+
+def _erdos_selfridge_first_conv(model: NeuralCA, alpha: float = 2.0) -> None:
+    """Overwrite first layer's own-channel weight for channels 3..5 (if present)
+    so they compute a Erdős–Selfridge-style potential contribution for each of
+    the three axes: count own-stones along the axis through the centre cell,
+    zero if any opponent stone blocks. Implemented at layer 0 as a weighted
+    sum of own-channel values along each axis; the opp-channel contribution
+    is negative with large magnitude, so any opp stone in the receptive field
+    pushes the output below 0 (ReLU kills it)."""
+    with torch.no_grad():
+        hex_conv = model.net[0]
+        if not isinstance(hex_conv, HexConv2d):
+            return
+        w = hex_conv.conv.weight
+        out_ch = w.shape[0]
+        axis_coords = [
+            [(1, 0), (1, 1), (1, 2)],       # axis 0
+            [(0, 1), (1, 1), (2, 1)],       # axis 1
+            [(0, 0), (1, 1), (2, 2)],       # axis 2 (diagonal)
+        ]
+        # Channels 3, 4, 5 host the potential per axis (if hidden >= 6).
+        for offset, coords in enumerate(axis_coords):
+            ch = 3 + offset
+            if ch >= out_ch:
+                break
+            w[ch].zero_()
+            for (r, c) in coords:
+                w[ch, 1, r, c] = alpha          # own stone: + alpha^contrib
+                w[ch, 2, r, c] = -10.0          # opp stone: massive negative
+            if hex_conv.conv.bias is not None:
+                hex_conv.conv.bias[ch] = 0.0
+
+
+def make_nca_variant(prior: str, seed: int = 0,
+                      n_layers: int = 6, hidden: int = 16) -> NeuralCAAgent:
+    """Produce a NeuralCAAgent with the named prior applied.
+
+    prior ∈ {"random", "d6_tied", "line_detector", "erdos_selfridge", "combo"}.
+    """
+    model = NeuralCA(n_layers=n_layers, hidden=hidden)
+    agent = NeuralCAAgent(name=f"nca_{prior}", model=model, seed=seed)
+    # __post_init__ has already done the random init + .to(device) + eval().
+    # We now overwrite the first layer's weights in-place. The agent is still
+    # on `self.device`; the helpers use `torch.no_grad()` and the agent's
+    # parameters, so device placement is preserved.
+    if prior == "random":
+        pass
+    elif prior == "d6_tied":
+        _d6_tie_first_conv(agent.model)
+    elif prior == "line_detector":
+        _line_detector_first_conv(agent.model)
+    elif prior == "erdos_selfridge":
+        _erdos_selfridge_first_conv(agent.model)
+    elif prior == "combo":
+        _d6_tie_first_conv(agent.model)
+        _line_detector_first_conv(agent.model)
+        _erdos_selfridge_first_conv(agent.model)
+    else:
+        raise ValueError(f"unknown prior {prior!r}")
+    return agent

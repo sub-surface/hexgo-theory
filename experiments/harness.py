@@ -99,6 +99,31 @@ def _f_neural_ca() -> object:
     return NeuralCAAgent(name="neural_ca", seed=0)
 
 
+def _f_nca_random() -> object:
+    from engine.neural_ca import make_nca_variant
+    return make_nca_variant("random", seed=0)
+
+
+def _f_nca_d6_tied() -> object:
+    from engine.neural_ca import make_nca_variant
+    return make_nca_variant("d6_tied", seed=0)
+
+
+def _f_nca_line_detector() -> object:
+    from engine.neural_ca import make_nca_variant
+    return make_nca_variant("line_detector", seed=0)
+
+
+def _f_nca_erdos_selfridge() -> object:
+    from engine.neural_ca import make_nca_variant
+    return make_nca_variant("erdos_selfridge", seed=0)
+
+
+def _f_nca_combo() -> object:
+    from engine.neural_ca import make_nca_variant
+    return make_nca_variant("combo", seed=0)
+
+
 def default_registry() -> dict[str, Callable[[], object]]:
     """Top-level factories keyed by short name."""
     return {
@@ -114,6 +139,11 @@ def default_registry() -> dict[str, Callable[[], object]]:
         "ca_combo_v2":    _f_ca_combo_v2,
         "mirror":         _f_mirror,
         "neural_ca":      _f_neural_ca,
+        "nca_random":            _f_nca_random,
+        "nca_d6_tied":           _f_nca_d6_tied,
+        "nca_line_detector":     _f_nca_line_detector,
+        "nca_erdos_selfridge":   _f_nca_erdos_selfridge,
+        "nca_combo":             _f_nca_combo,
     }
 
 
