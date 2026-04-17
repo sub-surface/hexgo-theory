@@ -55,14 +55,25 @@ Everything in this repo should be either feeding that write-up or falsifying par
 - **Epiplexity scan** (ROADMAP Programmes A, D, E): running, infrastructure in [run_epiplexity_scan.py](experiments/run_epiplexity_scan.py). Measures S_T, H_T for random vs structured agents; tests whether corpus description length saturates (Pisot conjecture prediction).
 - **Hamkins echo** ([run_hamkins_echo.py](experiments/run_hamkins_echo.py)): does draw fraction rise with horizon? Pilot says *no* — strong play is decisive, not draw-prone. Full 5×3×50 sweep currently running.
 - **Descriptive complexity positioning**: HexGo payoff = $\Sigma^0_1$ open, determined by Gale–Stewart directly. Infinite Hex (Hamkins) = $\Sigma^0_7$ per Törnä. We are *below* their game in complexity, which is why finite-horizon analysis is the right tool for us.
+- **P1–P5 falsifiable-propositions table** in [docs/theory/2026-04-17-hamkins-synthesis.md](docs/theory/2026-04-17-hamkins-synthesis.md) §5–6. P1, P2, P4, P5 currently supported; P3 (Pisot/sub-linear $|P|$) preliminary only.
+
+### Recently landed (2026-04-17)
+- Parallel match harness [experiments/harness.py](experiments/harness.py) with Wilson CIs, mp.Pool, 12-agent registry.
+- Combo-v2 opening-centre-bias fix — Black share restored to 0.53 [0.42, 0.64] from v1's 0.37 — [engine/ca_policy.py](engine/ca_policy.py) `make_combo_v2_ca` + [experiments/run_combo_defect.py](experiments/run_combo_defect.py). **P1 supported.**
+- **MirrorAgent** ([engine/agents.py](engine/agents.py)) — point-reflection pairing $c \mapsto -c$. Non-loss vs Random = 1.00, P2 wins vs Combo-v2 = 0.14. **P2 supported on both clauses.** [experiments/run_mirror_agent.py](experiments/run_mirror_agent.py).
+- **Diffraction analyser** [engine/diffraction.py](engine/diffraction.py) (torch+CUDA). Long self-play Bragg99 = 0.51 ± 0.13 (n=9) vs random control 0.055; Delone bounds stable (corr(N, $d_\max$) = +0.07). **P4, P5 supported.** [experiments/run_diffraction.py](experiments/run_diffraction.py).
+- **Untrained NeuralCAAgent** [engine/neural_ca.py](engine/neural_ca.py) (12.2k params on RTX 2060, 53 ms/move). Baseline vs Random/Combo-v2 in [experiments/run_neural_ca.py](experiments/run_neural_ca.py). CA-prior warm-start discussion in synthesis §7.
 
 ### Pending experiments (in priority order)
-1. **Diffraction spectrum of long self-play** — tests Leon's quasicrystal conjecture directly. Compute $|\sum_j e^{ik\cdot x_j}|^2$ over stone positions from a Combo-vs-Combo game at move 100+. Pure-point spectrum ⇒ Meyer set ⇒ quasicrystal.
-2. **First-mover-advantage curve** vs opening ply / agent strength — falsifies or strengthens the "perfect play is a first-player win" expectation.
-3. **Mirror / pairing agent** — port Hamkins §3 mirroring strategy to our axis-alignment game as `MirrorAgent` in [engine/agents.py](engine/agents.py). Predicted loss rate vs Combo < 30%.
+1. **First-mover-advantage curve** across the ladder (random → greedy → fork_aware → combo → combo_v2 → neural_ca) — trace Black-share vs agent strength. Falsifies/strengthens "perfect play is P1-win" and tells us whether the Black advantage grows, saturates, or inverts with strength. Prerequisite for any strong claim in the paper's introduction.
+2. **Train NeuralCAAgent** via self-play policy gradient; ablate CA-prior initialisers (random / $D_6$-tied / line-detector / Erdős–Selfridge / combo) per synthesis §7. Metric = games-to-match-Combo-v2.
+3. **Pisot confirmation for P3** — extend [experiments/run_epiplexity_scan.py](experiments/run_epiplexity_scan.py) to horizons $T \in \{120, 240, 480, 960\}$ for Combo-v2 self-play; fit $|P|(T) \sim a \log T + b$ vs linear.
+4. **Hamkins echo at horizon 960** — double the current 480 sweep to check if the decisive-play signal holds at longer horizons.
 
 ### Known-resolved
 - `ROADMAPv2.md` → `docs/ROADMAP.md`. The old v1 file is gone. If a comment or note still says "ROADMAPv2", that's a text reference, not a dead link — leave it or fix opportunistically.
+- Diffraction spectrum — **done** (commit 1d876d3 on master).
+- MirrorAgent — **done** (commit e143bcc on master).
 
 ## Invariants — do not violate
 
