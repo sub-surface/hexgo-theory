@@ -41,6 +41,7 @@ from engine.ca_policy import (
     make_fork_aware_ca,
     make_potential_gradient_ca,
     make_combo_ca,
+    make_combo_v2_ca,
 )
 
 
@@ -83,6 +84,10 @@ def _f_ca_combo() -> object:
     return make_combo_ca()
 
 
+def _f_ca_combo_v2() -> object:
+    return make_combo_v2_ca()
+
+
 def default_registry() -> dict[str, Callable[[], object]]:
     """Top-level factories keyed by short name."""
     return {
@@ -95,6 +100,7 @@ def default_registry() -> dict[str, Callable[[], object]]:
         "ca_fork_aware":  _f_ca_fork_aware,
         "ca_potential":   _f_ca_potential,
         "ca_combo":       _f_ca_combo,
+        "ca_combo_v2":    _f_ca_combo_v2,
     }
 
 
