@@ -1,0 +1,329 @@
+{
+  "ours": [
+    {
+      "source": "ours",
+      "agent": "random",
+      "label": "random",
+      "n_games": 200,
+      "wins_black": 0,
+      "wins_white": 0,
+      "unfinished": 200,
+      "n_decisive": 0,
+      "decisive_rate": 0.0,
+      "p_black": NaN,
+      "p_black_ci": [
+        NaN,
+        NaN
+      ]
+    },
+    {
+      "source": "ours",
+      "agent": "greedy",
+      "label": "greedy",
+      "n_games": 200,
+      "wins_black": 0,
+      "wins_white": 0,
+      "unfinished": 200,
+      "n_decisive": 0,
+      "decisive_rate": 0.0,
+      "p_black": NaN,
+      "p_black_ci": [
+        NaN,
+        NaN
+      ]
+    },
+    {
+      "source": "ours",
+      "agent": "fork_aware",
+      "label": "fork",
+      "n_games": 200,
+      "wins_black": 10,
+      "wins_white": 7,
+      "unfinished": 183,
+      "n_decisive": 17,
+      "decisive_rate": 0.085,
+      "p_black": 0.5882352941176471,
+      "p_black_ci": [
+        0.36005074385515545,
+        0.7838921396086862
+      ]
+    },
+    {
+      "source": "ours",
+      "agent": "combo",
+      "label": "combo",
+      "n_games": 200,
+      "wins_black": 69,
+      "wins_white": 94,
+      "unfinished": 37,
+      "n_decisive": 163,
+      "decisive_rate": 0.815,
+      "p_black": 0.4233128834355828,
+      "p_black_ci": [
+        0.3500848681946965,
+        0.500072406729543
+      ]
+    },
+    {
+      "source": "ours",
+      "agent": "ca_combo_v2",
+      "label": "combo_v2",
+      "n_games": 200,
+      "wins_black": 72,
+      "wins_white": 84,
+      "unfinished": 44,
+      "n_decisive": 156,
+      "decisive_rate": 0.78,
+      "p_black": 0.46153846153846156,
+      "p_black_ci": [
+        0.38517280077153876,
+        0.5397528756481167
+      ]
+    }
+  ],
+  "charlie": [
+    {
+      "source": "charlie",
+      "agent": "local_random",
+      "label": "random*",
+      "n_games": 30,
+      "wins_black": 3,
+      "wins_white": 3,
+      "unfinished": 24,
+      "n_decisive": 6,
+      "decisive_rate": 0.2,
+      "p_black": 0.5,
+      "p_black_ci": [
+        0.18761280689940874,
+        0.8123871931005913
+      ]
+    },
+    {
+      "source": "charlie",
+      "agent": "oracle_greedy",
+      "label": "greedy*",
+      "n_games": 30,
+      "wins_black": 2,
+      "wins_white": 28,
+      "unfinished": 0,
+      "n_decisive": 30,
+      "decisive_rate": 1.0,
+      "p_black": 0.06666666666666667,
+      "p_black_ci": [
+        0.01847663532769335,
+        0.21323817721072091
+      ]
+    },
+    {
+      "source": "charlie",
+      "agent": "nca_greedy",
+      "label": "nca_greedy*",
+      "n_games": 30,
+      "wins_black": 0,
+      "wins_white": 30,
+      "unfinished": 0,
+      "n_decisive": 30,
+      "decisive_rate": 1.0,
+      "p_black": 0.0,
+      "p_black_ci": [
+        0.0,
+        0.113517091390478
+      ]
+    },
+    {
+      "source": "charlie",
+      "agent": "balanced_lookahead",
+      "label": "bal_look*",
+      "n_games": 30,
+      "wins_black": 14,
+      "wins_white": 16,
+      "unfinished": 0,
+      "n_decisive": 30,
+      "decisive_rate": 1.0,
+      "p_black": 0.4666666666666667,
+      "p_black_ci": [
+        0.30232127224128236,
+        0.6385798671847496
+      ]
+    },
+    {
+      "source": "charlie",
+      "agent": "lookahead",
+      "label": "lookahead*",
+      "n_games": 30,
+      "wins_black": 15,
+      "wins_white": 14,
+      "unfinished": 1,
+      "n_decisive": 29,
+      "decisive_rate": 0.9666666666666667,
+      "p_black": 0.5172413793103449,
+      "p_black_ci": [
+        0.3443073797056916,
+        0.6861418066920478
+      ]
+    }
+  ],
+  "ordered": [
+    {
+      "source": "ours",
+      "agent": "random",
+      "label": "random",
+      "n_games": 200,
+      "wins_black": 0,
+      "wins_white": 0,
+      "unfinished": 200,
+      "n_decisive": 0,
+      "decisive_rate": 0.0,
+      "p_black": NaN,
+      "p_black_ci": [
+        NaN,
+        NaN
+      ]
+    },
+    {
+      "source": "charlie",
+      "agent": "local_random",
+      "label": "random*",
+      "n_games": 30,
+      "wins_black": 3,
+      "wins_white": 3,
+      "unfinished": 24,
+      "n_decisive": 6,
+      "decisive_rate": 0.2,
+      "p_black": 0.5,
+      "p_black_ci": [
+        0.18761280689940874,
+        0.8123871931005913
+      ]
+    },
+    {
+      "source": "ours",
+      "agent": "greedy",
+      "label": "greedy",
+      "n_games": 200,
+      "wins_black": 0,
+      "wins_white": 0,
+      "unfinished": 200,
+      "n_decisive": 0,
+      "decisive_rate": 0.0,
+      "p_black": NaN,
+      "p_black_ci": [
+        NaN,
+        NaN
+      ]
+    },
+    {
+      "source": "charlie",
+      "agent": "nca_greedy",
+      "label": "nca_greedy*",
+      "n_games": 30,
+      "wins_black": 0,
+      "wins_white": 30,
+      "unfinished": 0,
+      "n_decisive": 30,
+      "decisive_rate": 1.0,
+      "p_black": 0.0,
+      "p_black_ci": [
+        0.0,
+        0.113517091390478
+      ]
+    },
+    {
+      "source": "charlie",
+      "agent": "oracle_greedy",
+      "label": "greedy*",
+      "n_games": 30,
+      "wins_black": 2,
+      "wins_white": 28,
+      "unfinished": 0,
+      "n_decisive": 30,
+      "decisive_rate": 1.0,
+      "p_black": 0.06666666666666667,
+      "p_black_ci": [
+        0.01847663532769335,
+        0.21323817721072091
+      ]
+    },
+    {
+      "source": "ours",
+      "agent": "fork_aware",
+      "label": "fork",
+      "n_games": 200,
+      "wins_black": 10,
+      "wins_white": 7,
+      "unfinished": 183,
+      "n_decisive": 17,
+      "decisive_rate": 0.085,
+      "p_black": 0.5882352941176471,
+      "p_black_ci": [
+        0.36005074385515545,
+        0.7838921396086862
+      ]
+    },
+    {
+      "source": "ours",
+      "agent": "combo",
+      "label": "combo",
+      "n_games": 200,
+      "wins_black": 69,
+      "wins_white": 94,
+      "unfinished": 37,
+      "n_decisive": 163,
+      "decisive_rate": 0.815,
+      "p_black": 0.4233128834355828,
+      "p_black_ci": [
+        0.3500848681946965,
+        0.500072406729543
+      ]
+    },
+    {
+      "source": "ours",
+      "agent": "ca_combo_v2",
+      "label": "combo_v2",
+      "n_games": 200,
+      "wins_black": 72,
+      "wins_white": 84,
+      "unfinished": 44,
+      "n_decisive": 156,
+      "decisive_rate": 0.78,
+      "p_black": 0.46153846153846156,
+      "p_black_ci": [
+        0.38517280077153876,
+        0.5397528756481167
+      ]
+    },
+    {
+      "source": "charlie",
+      "agent": "balanced_lookahead",
+      "label": "bal_look*",
+      "n_games": 30,
+      "wins_black": 14,
+      "wins_white": 16,
+      "unfinished": 0,
+      "n_decisive": 30,
+      "decisive_rate": 1.0,
+      "p_black": 0.4666666666666667,
+      "p_black_ci": [
+        0.30232127224128236,
+        0.6385798671847496
+      ]
+    },
+    {
+      "source": "charlie",
+      "agent": "lookahead",
+      "label": "lookahead*",
+      "n_games": 30,
+      "wins_black": 15,
+      "wins_white": 14,
+      "unfinished": 1,
+      "n_decisive": 29,
+      "decisive_rate": 0.9666666666666667,
+      "p_black": 0.5172413793103449,
+      "p_black_ci": [
+        0.3443073797056916,
+        0.6861418066920478
+      ]
+    }
+  ],
+  "note": "p_black computed over decisive games only; unfinished = reached max-ply cap. Wilson 95% CI. Charlie's data played on a 32x32 board (can wrap/clip), ours on the infinite hex lattice - the two axes are not directly calibrated, but the ordering within each dataset is."
+}

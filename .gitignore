@@ -2,3 +2,10 @@ __pycache__/
 *.pyc
 *.pyo
 .pytest_cache/
+
+# Large generated outputs -- scripts to regenerate are in experiments/.
+data/
+artifacts/
+checkpoints/
+training_log.txt
+.claude/scheduled_tasks.lock

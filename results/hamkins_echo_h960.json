@@ -1,0 +1,48 @@
+{
+  "random_vs_combo": {
+    "black": "random",
+    "white": "combo",
+    "rows": [
+      {
+        "horizon": 960,
+        "n_games": 50,
+        "black_wins": 0,
+        "white_wins": 41,
+        "unfinished": 9,
+        "mean_length": 471.44,
+        "median_length": 420.5
+      }
+    ]
+  },
+  "greedy_vs_combo": {
+    "black": "greedy",
+    "white": "combo",
+    "rows": [
+      {
+        "horizon": 960,
+        "n_games": 50,
+        "black_wins": 29,
+        "white_wins": 1,
+        "unfinished": 20,
+        "mean_length": 418.24,
+        "median_length": 83.0
+      }
+    ]
+  },
+  "combo_vs_combo": {
+    "black": "combo",
+    "white": "combo",
+    "rows": [
+      {
+        "horizon": 960,
+        "n_games": 50,
+        "black_wins": 10,
+        "white_wins": 30,
+        "unfinished": 10,
+        "mean_length": 249.2,
+        "median_length": 34.0
+      }
+    ]
+  },
+  "_wall_time": 3890.469491004944
+}

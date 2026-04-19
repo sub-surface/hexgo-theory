@@ -1,0 +1,266 @@
+{
+  "config": {
+    "n_games": 6,
+    "max_moves": 60,
+    "epochs": 1,
+    "hidden": 32,
+    "depth": 4,
+    "batch_size": 32,
+    "ladder_hidden_sizes": [
+      4,
+      8,
+      16
+    ],
+    "seed": 20260418
+  },
+  "agents": {
+    "random": {
+      "corpus_size": 360,
+      "t_corpus_s": 0.9510577999972156,
+      "t_train_s": 4.738174999998591,
+      "t_epi_s": 2.295061999997415,
+      "agent_source_gzip_bytes": 2704,
+      "history": {
+        "policy_ce_train": [
+          8.438960946636435
+        ],
+        "policy_ce_val": [
+          8.472304867159936
+        ],
+        "mlm_ce_train": [
+          1.1010485563749148
+        ],
+        "mlm_ce_val": [
+          1.0584510167439778
+        ],
+        "n_train": 324,
+        "n_val": 36,
+        "hidden": 32,
+        "depth": 4,
+        "final_policy_ce": 8.472304867159936,
+        "final_mlm_ce": 1.0584510167439778
+      },
+      "probe_accs": {
+        "threat_self": [
+          0.0,
+          0.0
+        ],
+        "threat_opp": [
+          0.0,
+          0.0
+        ],
+        "fork_self": [
+          0.6284722089767456,
+          0.5972222089767456
+        ],
+        "high_potential": [
+          0.9826388955116272,
+          0.9861111044883728
+        ]
+      },
+      "epiplexity": {
+        "hidden_losses": {
+          "4": 8.473726918620448,
+          "8": 8.472837478883806,
+          "16": 8.472167630349436
+        },
+        "hidden_gzip_bytes": {
+          "4": 4418,
+          "8": 10347,
+          "16": 31756
+        },
+        "reference_loss": 8.472167630349436,
+        "threshold_loss": 9.31938439338438,
+        "min_hidden": 4,
+        "S_T_gzip_bytes": 4418
+      },
+      "observer_gzip_bytes": 113403
+    },
+    "greedy": {
+      "corpus_size": 66,
+      "t_corpus_s": 0.06710819999716477,
+      "t_train_s": 0.060885399994731415,
+      "t_epi_s": 0.2647015999973519,
+      "agent_source_gzip_bytes": 2704,
+      "history": {
+        "policy_ce_train": [
+          5.417418988545736
+        ],
+        "policy_ce_val": [
+          5.2024149894714355
+        ],
+        "mlm_ce_train": [
+          1.1239829619725545
+        ],
+        "mlm_ce_val": [
+          1.1167950630187988
+        ],
+        "n_train": 60,
+        "n_val": 6,
+        "hidden": 32,
+        "depth": 4,
+        "final_policy_ce": 5.2024149894714355,
+        "final_mlm_ce": 1.1167950630187988
+      },
+      "probe_accs": {
+        "threat_self": [
+          0.11320754885673523,
+          0.0
+        ],
+        "threat_opp": [
+          0.22641509771347046,
+          0.0
+        ],
+        "fork_self": [
+          0.6415094137191772,
+          0.6153846383094788
+        ],
+        "high_potential": [
+          0.9245283007621765,
+          0.8461538553237915
+        ]
+      },
+      "epiplexity": {
+        "hidden_losses": {
+          "4": 5.201391696929932,
+          "8": 5.205555438995361,
+          "16": 5.198281288146973
+        },
+        "hidden_gzip_bytes": {
+          "4": 4414,
+          "8": 10348,
+          "16": 31751
+        },
+        "reference_loss": 5.198281288146973,
+        "threshold_loss": 5.718109416961671,
+        "min_hidden": 4,
+        "S_T_gzip_bytes": 4414
+      },
+      "observer_gzip_bytes": 113356
+    },
+    "mirror": {
+      "corpus_size": 186,
+      "t_corpus_s": 0.4980448999995133,
+      "t_train_s": 0.11248479999630945,
+      "t_epi_s": 0.6045845999979065,
+      "agent_source_gzip_bytes": 3775,
+      "history": {
+        "policy_ce_train": [
+          5.516569546290806
+        ],
+        "policy_ce_val": [
+          5.538463592529297
+        ],
+        "mlm_ce_train": [
+          1.1131200790405273
+        ],
+        "mlm_ce_val": [
+          1.0993802547454834
+        ],
+        "n_train": 168,
+        "n_val": 18,
+        "hidden": 32,
+        "depth": 4,
+        "final_policy_ce": 5.538463592529297,
+        "final_mlm_ce": 1.0993802547454834
+      },
+      "probe_accs": {
+        "threat_self": [
+          0.033557046204805374,
+          0.027027027681469917
+        ],
+        "threat_opp": [
+          0.06040268391370773,
+          0.0810810849070549
+        ],
+        "fork_self": [
+          0.8590604066848755,
+          0.9189189672470093
+        ],
+        "high_potential": [
+          0.9597315192222595,
+          1.0
+        ]
+      },
+      "epiplexity": {
+        "hidden_losses": {
+          "4": 5.544206619262695,
+          "8": 5.546056747436523,
+          "16": 5.539479732513428
+        },
+        "hidden_gzip_bytes": {
+          "4": 4422,
+          "8": 10360,
+          "16": 31746
+        },
+        "reference_loss": 5.539479732513428,
+        "threshold_loss": 6.093427705764771,
+        "min_hidden": 4,
+        "S_T_gzip_bytes": 4422
+      },
+      "observer_gzip_bytes": 113384
+    },
+    "combo_v2": {
+      "corpus_size": 316,
+      "t_corpus_s": 1.5184636999983923,
+      "t_train_s": 0.3190612999969744,
+      "t_epi_s": 1.0912227999942843,
+      "agent_source_gzip_bytes": 4182,
+      "history": {
+        "policy_ce_train": [
+          6.154282917892724
+        ],
+        "policy_ce_val": [
+          6.176395893096924
+        ],
+        "mlm_ce_train": [
+          1.105953474212111
+        ],
+        "mlm_ce_val": [
+          1.0860127210617065
+        ],
+        "n_train": 285,
+        "n_val": 31,
+        "hidden": 32,
+        "depth": 4,
+        "final_policy_ce": 6.176395893096924,
+        "final_mlm_ce": 1.0860127210617065
+      },
+      "probe_accs": {
+        "threat_self": [
+          0.007905138656497002,
+          0.0
+        ],
+        "threat_opp": [
+          0.0,
+          0.0
+        ],
+        "fork_self": [
+          0.9288538098335266,
+          0.9047619700431824
+        ],
+        "high_potential": [
+          0.9881423115730286,
+          0.9523810148239136
+        ]
+      },
+      "epiplexity": {
+        "hidden_losses": {
+          "4": 6.18144416809082,
+          "8": 6.182567596435547,
+          "16": 6.17557430267334
+        },
+        "hidden_gzip_bytes": {
+          "4": 4424,
+          "8": 10353,
+          "16": 31763
+        },
+        "reference_loss": 6.17557430267334,
+        "threshold_loss": 6.793131732940674,
+        "min_hidden": 4,
+        "S_T_gzip_bytes": 4424
+      },
+      "observer_gzip_bytes": 113443
+    }
+  }
+}

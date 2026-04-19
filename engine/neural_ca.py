@@ -483,8 +483,14 @@ def train_self_play(trainee: NeuralCAAgent, *,
 
     running_reward = 0.0
     history = {"reward": [], "loss": [], "decisive": [], "wall_time": []}
-    accumulated_losses: list[torch.Tensor] = []
+    # Gradient-accumulation approach: backprop each game's loss immediately
+    # (so its autograd graph is freed) and step the optimiser every
+    # ``step_every`` games. This keeps VRAM constant w.r.t. step_every — the
+    # previous "hold all loss tensors then stack" pattern OOMs on a 5GB GPU
+    # once teacher phase ends and trajectories hit ~120 moves.
     games_in_step = 0
+    accum_loss_scalars: list[float] = []
+    optimiser.zero_grad()
     t0 = time.perf_counter()
 
     for g in range(total_games):
@@ -502,7 +508,8 @@ def train_self_play(trainee: NeuralCAAgent, *,
 
         if trajectory:
             advantage = reward - running_reward
-            # Accumulate policy-gradient loss for each trainee move.
+            # Accumulate policy-gradient loss for each trainee move, backprop
+            # once per game so the graph is freed before the next rollout.
             log_probs = []
             for (encoded, origin, move, legal_cells) in trajectory:
                 lp = _recompute_log_prob(
@@ -510,23 +517,28 @@ def train_self_play(trainee: NeuralCAAgent, *,
                 )
                 log_probs.append(lp)
             if log_probs:
-                # Mean over moves, not sum — prevents the loss scaling with
-                # trajectory length (a long losing game otherwise dominates
-                # gradient).
+                # Mean over moves for trajectory-length invariance; divide by
+                # step_every so the accumulated gradient across step_every
+                # games has the same magnitude as the old "stack then backward"
+                # path.
                 mean_lp = torch.stack(log_probs).mean()
-                loss = -advantage * mean_lp
-                accumulated_losses.append(loss)
+                loss = -advantage * mean_lp / max(1, step_every)
+                loss.backward()
+                accum_loss_scalars.append(float(loss.detach().cpu()))
+                # Free references to the per-move autograd graph nodes.
+                del log_probs, mean_lp, loss
 
         games_in_step += 1
-        if games_in_step >= step_every and accumulated_losses:
-            total = torch.stack(accumulated_losses).sum() / len(accumulated_losses)
-            optimiser.zero_grad()
-            total.backward()
+        if games_in_step >= step_every:
             torch.nn.utils.clip_grad_norm_(trainee.model.parameters(), 1.0)
             optimiser.step()
-            history["loss"].append(float(total.detach().cpu()))
-            accumulated_losses.clear()
+            optimiser.zero_grad()
+            if accum_loss_scalars:
+                history["loss"].append(sum(accum_loss_scalars))
+            accum_loss_scalars.clear()
             games_in_step = 0
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
 
         history["reward"].append(reward)
         if reward != 0.0:

@@ -1,0 +1,30 @@
+{
+  "az_vs_random": {
+    "n_games": 50,
+    "wins_black": 0,
+    "wins_white": 0,
+    "unfinished": 50,
+    "wall_time": 103.54611253738403
+  },
+  "az_vs_combov2": {
+    "n_games": 50,
+    "wins_black": 0,
+    "wins_white": 50,
+    "unfinished": 0,
+    "wall_time": 37.163395166397095
+  },
+  "combov2_vs_az": {
+    "n_games": 50,
+    "wins_black": 46,
+    "wins_white": 2,
+    "unfinished": 2,
+    "wall_time": 27.67740821838379
+  },
+  "_args": {
+    "quick": false,
+    "n": 50,
+    "ckpt": "C:\\Users\\Leon\\Desktop\\Psychograph\\hexgo-theory\\.claude\\worktrees\\cranky-jepsen-a5d631\\artifacts\\checkpoints\\az_pretrain.pt",
+    "temperature": 0.0
+  },
+  "_wall_time": 168.38691592216492
+}

@@ -1,0 +1,182 @@
+{
+  "random_vs_combo": {
+    "black": "random",
+    "white": "combo",
+    "rows": [
+      {
+        "horizon": 30,
+        "n_games": 50,
+        "black_wins": 0,
+        "white_wins": 1,
+        "unfinished": 49,
+        "mean_length": 29.92,
+        "median_length": 30.0
+      },
+      {
+        "horizon": 60,
+        "n_games": 50,
+        "black_wins": 0,
+        "white_wins": 1,
+        "unfinished": 49,
+        "mean_length": 59.32,
+        "median_length": 60.0
+      },
+      {
+        "horizon": 120,
+        "n_games": 50,
+        "black_wins": 0,
+        "white_wins": 9,
+        "unfinished": 41,
+        "mean_length": 112.26,
+        "median_length": 120.0
+      },
+      {
+        "horizon": 240,
+        "n_games": 50,
+        "black_wins": 0,
+        "white_wins": 19,
+        "unfinished": 31,
+        "mean_length": 198.44,
+        "median_length": 240.0
+      },
+      {
+        "horizon": 480,
+        "n_games": 50,
+        "black_wins": 0,
+        "white_wins": 28,
+        "unfinished": 22,
+        "mean_length": 330.78,
+        "median_length": 420.5
+      },
+      {
+        "horizon": 960,
+        "n_games": 50,
+        "black_wins": 0,
+        "white_wins": 41,
+        "unfinished": 9,
+        "mean_length": 471.44,
+        "median_length": 420.5
+      }
+    ]
+  },
+  "greedy_vs_combo": {
+    "black": "greedy",
+    "white": "combo",
+    "rows": [
+      {
+        "horizon": 30,
+        "n_games": 50,
+        "black_wins": 11,
+        "white_wins": 0,
+        "unfinished": 39,
+        "mean_length": 29.78,
+        "median_length": 30.0
+      },
+      {
+        "horizon": 60,
+        "n_games": 50,
+        "black_wins": 24,
+        "white_wins": 1,
+        "unfinished": 25,
+        "mean_length": 49.18,
+        "median_length": 58.5
+      },
+      {
+        "horizon": 120,
+        "n_games": 50,
+        "black_wins": 25,
+        "white_wins": 1,
+        "unfinished": 24,
+        "mean_length": 78.96,
+        "median_length": 83.0
+      },
+      {
+        "horizon": 240,
+        "n_games": 50,
+        "black_wins": 29,
+        "white_wins": 1,
+        "unfinished": 20,
+        "mean_length": 130.24,
+        "median_length": 83.0
+      },
+      {
+        "horizon": 480,
+        "n_games": 50,
+        "black_wins": 29,
+        "white_wins": 1,
+        "unfinished": 20,
+        "mean_length": 226.24,
+        "median_length": 83.0
+      },
+      {
+        "horizon": 960,
+        "n_games": 50,
+        "black_wins": 29,
+        "white_wins": 1,
+        "unfinished": 20,
+        "mean_length": 418.24,
+        "median_length": 83.0
+      }
+    ]
+  },
+  "combo_vs_combo": {
+    "black": "combo",
+    "white": "combo",
+    "rows": [
+      {
+        "horizon": 30,
+        "n_games": 50,
+        "black_wins": 5,
+        "white_wins": 16,
+        "unfinished": 29,
+        "mean_length": 27.74,
+        "median_length": 30.0
+      },
+      {
+        "horizon": 60,
+        "n_games": 50,
+        "black_wins": 7,
+        "white_wins": 24,
+        "unfinished": 19,
+        "mean_length": 40.86,
+        "median_length": 34.0
+      },
+      {
+        "horizon": 120,
+        "n_games": 50,
+        "black_wins": 9,
+        "white_wins": 26,
+        "unfinished": 15,
+        "mean_length": 61.42,
+        "median_length": 34.0
+      },
+      {
+        "horizon": 240,
+        "n_games": 50,
+        "black_wins": 10,
+        "white_wins": 28,
+        "unfinished": 12,
+        "mean_length": 91.08,
+        "median_length": 34.0
+      },
+      {
+        "horizon": 480,
+        "n_games": 50,
+        "black_wins": 10,
+        "white_wins": 29,
+        "unfinished": 11,
+        "mean_length": 144.42,
+        "median_length": 34.0
+      },
+      {
+        "horizon": 960,
+        "n_games": 50,
+        "black_wins": 10,
+        "white_wins": 30,
+        "unfinished": 10,
+        "mean_length": 249.2,
+        "median_length": 34.0
+      }
+    ]
+  }
+}
